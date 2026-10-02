@@ -1,0 +1,177 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import ROOT
+import math as m
+
+# Campo magnetico (Tesla)
+B = 1.0
+
+um = 1e-6
+xsize = 300 * um
+ysize = 50 * um
+zsize = 100 * um
+
+class Hit:
+    def __init__(self, x, y, z, trkind, layind):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.trkind = trkind
+        self.layind = layind
+
+class Track:
+    def __init__(self, pt, phi, theta, charge):
+        self.pt = pt
+        self.phi = phi
+        self.theta = theta
+        self.charge = charge
+
+def intersec(pos, trk, charge, xl):
+    xl_center = xl + xsize / 2.0
+
+    h = charge
+    # Formula corretta: R = pT / (0.3 * B)
+    R = trk.Pt() / (0.3 * B)
+    phi0 = trk.Phi() + charge * ROOT.TMath.Pi() / 2.0
+
+    xc = pos.X() - R * m.cos(phi0)
+    yc = pos.Y() - R * m.sin(phi0)
+
+    # Controllo dominio per evitare crash con acos()
+    arg = (xl_center - pos.X()) / R + m.cos(phi0)
+    if arg > 1.0 or arg < -1.0:
+        return None  # La traccia non raggiunge questo layer
+
+    ang = m.acos(max(-1.0, min(1.0, arg)))
+    if phi0 < 0:
+        ang = -ang
+
+    sin_th = m.sin(trk.Theta())
+    if sin_th == 0:
+        return None
+
+    s = R * (ang - phi0) / (-h * sin_th)
+
+    x = pos.X() + R * (m.cos(phi0 - h * s * sin_th / R) - m.cos(phi0))
+    y = pos.Y() + R * (m.sin(phi0 - h * s * sin_th / R) - m.sin(phi0))
+    z = pos.Z() + s * m.cos(trk.Theta())
+
+    pos.SetX(x)
+    pos.SetY(y)
+    pos.SetZ(z)
+
+    phitn = m.atan2(yc - y, xc - x) + h * ROOT.TMath.Pi() / 2.0
+    trk.SetPhi(phitn)
+
+    # Discretizzazione in pixel
+    y_pix = m.floor(y / ysize) * ysize + ysize / 2.0
+    z_pix = m.floor(z / zsize) * zsize + zsize / 2.0
+
+    return x, y_pix, z_pix
+
+
+# ==========================================
+# Parte 1: Tracciamento Multi-Layer
+# ==========================================
+Xlayer1 = [0.05, 0.1, 0.15, 0.25, 0.35, 0.45]
+lim1 = 0.7
+
+c1 = ROOT.TCanvas("c1", "Simulazione Multi-Layer", 5, 5, 900, 600)
+c1.Divide(2, 1)
+
+mPi = 0.1396  # Massa del pione carico (GeV)
+rnd = ROOT.TRandom3(1234567)
+
+gr1 = ROOT.TGraph()
+grz1 = ROOT.TGraph()
+gr1.SetMarkerColor(2);  gr1.SetMarkerStyle(20);  gr1.SetMarkerSize(0.5)
+grz1.SetMarkerColor(2); grz1.SetMarkerStyle(20); grz1.SetMarkerSize(0.5)
+
+c1.cd(1)
+ROOT.gPad.DrawFrame(0, -0.2 * lim1, 0.5, 0.2 * lim1)
+l1 = ROOT.TLine()
+for x_val in Xlayer1:
+    l1.DrawLine(x_val, -0.2 * lim1, x_val, 0.2 * lim1)
+
+c1.cd(2)
+ROOT.gPad.DrawFrame(-0.2 * lim1, 0.0, 0.2 * lim1, 0.5)
+for x_val in Xlayer1:
+    l1.DrawLine(-0.2 * lim1, x_val, 0.2 * lim1, x_val)
+
+for jevt in range(10):
+    ntrack = int(rnd.Gaus(100, 20))
+    for j in range(ntrack):
+        trk = ROOT.TLorentzVector()
+        costh = rnd.Rndm() * 0.4 - 0.2
+        pt = 10.0
+        phi = rnd.Rndm() * 0.2 - 0.1
+        theta = m.acos(costh)
+
+        v = ROOT.TVector3()
+        v.SetMagThetaPhi(pt / m.sin(theta), theta, phi)
+        trk.SetVectM(v, mPi)
+
+        charge = 1 if rnd.Rndm() < 0.5 else -1
+        pos = ROOT.TVector3(0, 0, 0)
+
+        for xl in Xlayer1:
+            hits = intersec(pos, trk, charge, xl)
+            if hits is not None:
+                gr1.SetPoint(gr1.GetN(), hits[0], hits[1])
+                grz1.SetPoint(grz1.GetN(), hits[2], hits[0])
+
+c1.cd(1)
+gr1.Draw("P SAME")
+c1.cd(2)
+grz1.Draw("P SAME")
+c1.Update()
+
+
+# ==========================================
+# Parte 2: Dettaglio Griglia Pixel (Singolo Layer)
+# ==========================================
+Xlayer2 = [0.05]
+lim2 = 20 * ysize
+
+c2 = ROOT.TCanvas("c2", "Dettaglio Sensore Pixel", 920, 5, 900, 600)
+
+gr2 = ROOT.TGraph()
+gr2.SetMarkerColor(4); gr2.SetMarkerStyle(20); gr2.SetMarkerSize(0.5)
+
+c2.cd()
+ROOT.gPad.DrawFrame(Xlayer2[0] - 10 * xsize, -lim2, Xlayer2[0] + 10 * xsize, lim2)
+
+l2 = ROOT.TLine()
+for x_val in Xlayer2:
+    l2.DrawLine(x_val, -lim2, x_val, lim2)
+    l2.DrawLine(x_val + xsize, -lim2, x_val + xsize, lim2)
+
+for k in range(-20, 20):
+    l2.DrawLine(Xlayer2[0], k * ysize, Xlayer2[0] + xsize, k * ysize)
+
+for jevt in range(10):
+    ntrack = int(rnd.Gaus(100, 20))
+    for j in range(ntrack):
+        trk = ROOT.TLorentzVector()
+        costh = rnd.Rndm() * 0.4 - 0.2
+        pt = 10.0
+        phi = rnd.Rndm() * 0.2 - 0.1
+        theta = m.acos(costh)
+
+        v = ROOT.TVector3()
+        v.SetMagThetaPhi(pt / m.sin(theta), theta, phi)
+        trk.SetVectM(v, mPi)
+
+        charge = 1 if rnd.Rndm() < 0.5 else -1
+        pos = ROOT.TVector3(0, 0, 0)
+
+        hits = intersec(pos, trk, charge, Xlayer2[0])
+        if hits is not None:
+            gr2.SetPoint(gr2.GetN(), hits[0], hits[1])
+
+c2.cd()
+gr2.Draw("P SAME")
+c2.Update()
+
+# Unica chiamata finale per l'interfaccia grafica
+ROOT.gApplication.Run()
