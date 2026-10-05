@@ -19,6 +19,10 @@ class hit:
         self.z = z
         self.trkind = trkind
         self.layind = layind
+    def __call__(self):
+        return [self.x, self.y, self.z, self.trkind, self.layind]
+    def tostr(self):
+        return f"{self.x:.6f} {self.y:.6f} {self.z:.6f} {self.trkind} {self.layind}"
 
 class track:
     def __init__(self, pt, phi, theta, charge):
@@ -26,7 +30,9 @@ class track:
         self.phi = phi
         self.theta = theta
         self.charge = charge
+        
 ###### Funzione per il calcolo dell'intersezione elica-piano ######
+
 def intersec(pos, trk, charge, xl):
     #Intersection at the center of pixel
     xl_center = xl+xsize/2.0
@@ -65,62 +71,42 @@ def intersec(pos, trk, charge, xl):
 
 ###### Generazione e disegno degli "hit" ######
 
+#Geometria
 Xlayer = [0.05, 0.1, 0.15, 0.25, 0.35, 0.45]
 lim = 0.7
-
-c = ROOT.TCanvas("c1", "Hit", 5, 5, 900, 600)
-c.Divide(2, 1)
 
 mPi = 0.1396  # Massa del pione carico (GeV)
 rnd = ROOT.TRandom3()
 rnd.SetSeed(1234567)
 
-gr = ROOT.TGraph()
-grz = ROOT.TGraph()
-gr.SetMarkerColor(2);  gr.SetMarkerStyle(20);  gr.SetMarkerSize(0.5)
-grz.SetMarkerColor(2); grz.SetMarkerStyle(20); grz.SetMarkerSize(0.5)
-
-c.cd(1)
-ROOT.gPad.DrawFrame(0,-0.2*lim,0.5,0.2*lim)
-l = ROOT.TLine()
-for i in range(len(Xlayer)):
-    l.DrawLine(Xlayer[i],-0.2*lim,Xlayer[i],0.2*lim)
-    
-c.cd(2)
-ROOT.gPad.DrawFrame(-0.2*lim,0.0,0.2*lim,0.5)
-for i in range(len(Xlayer)):
-    l.DrawLine(-0.2*lim,Xlayer[i],0.2*lim,Xlayer[i])
-
+f = open('dati.txt', 'w')
+#MC per eventi
 for jevt in range(0,10): #n eventi
-  ntrack  = int(rnd.Gaus(100,20))
-  for j in range(0,ntrack): #n tracce
+    f.write(str(jevt) + '\n')
+    ntrack  = int(rnd.Gaus(100,20))
+    for j in range(0,ntrack): #n tracce
 
-    trk   = ROOT.TLorentzVector()
-    costh = rnd.Rndm()*0.4-0.2
-    zref  = 0 #rnd.Rndm()*0.1-0.05
+        trk   = ROOT.TLorentzVector()
+        costh = rnd.Rndm()*0.4-0.2
+        zref  = 0 #rnd.Rndm()*0.1-0.05
+        
+        pt    = 10
+        phi   = rnd.Rndm()*0.2-0.1
+        theta = m.acos(costh)
+        
+        v = ROOT.TVector3()
+        v.SetMagThetaPhi(pt/m.sin(theta),theta,phi)
+        trk.SetVectM(v,mPi)
+        
+        charge = 1
+        if rnd.Rndm()<0.5:
+            charge = -1
+            
+        pos = ROOT.TVector3(0,0,zref)
+        for i in range(0,len(Xlayer)):
+            hits = intersec(pos, trk, charge, Xlayer[i])
+            the_hit = hit(*hits, j, i)
+            f.write(the_hit.tostr() + '\n')
+            
+f.close()
 
-    pt    = 10
-    phi   = rnd.Rndm()*0.2-0.1
-    theta = m.acos(costh)
-
-    v = ROOT.TVector3()
-    v.SetMagThetaPhi(pt/m.sin(theta),theta,phi)
-    trk.SetVectM(v,mPi)
-
-    charge = 1
-    if rnd.Rndm()<0.5:
-        charge = -1
-
-    pos = ROOT.TVector3(0,0,zref)
-    for i in range(0,len(Xlayer)):
-        hits = intersec(pos,trk,charge,Xlayer[i])
-        gr.SetPoint(gr.GetN()  ,hits[0],hits[1])
-        grz.SetPoint(grz.GetN(),hits[2],hits[0])
-
-    if j==0:
-        c.cd(1)
-        gr.Draw("P")
-        c.cd(2)
-        grz.Draw("P")
-
-ROOT.gApplication.Run()

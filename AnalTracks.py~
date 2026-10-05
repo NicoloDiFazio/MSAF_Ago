@@ -1,0 +1,9 @@
+f = open('dati.txt', 'r')
+
+for line in f:
+    if len(line) = 1:
+        evento = line
+    while len(line) = 5:
+                
+
+f.close()
