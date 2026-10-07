@@ -109,4 +109,3 @@ for jevt in range(0,10): #n eventi
             f.write(the_hit.tostr() + '\n')
             
 f.close()
-
