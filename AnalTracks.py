@@ -23,7 +23,14 @@ class hit: #aggiunta per comodita' la colonna indice d'evento
         return sfe(self.x, self.y, self.z)
     def tocam(self):
         return cam(self.x, self.y, self.z)
-
+"""
+class event:
+    def __init__(self, n, data):
+        self.n = n
+        self.data = data
+    def __call__(self):
+        return [self.n, self.data]
+"""    
 def cam(x, y, z):
     rho = m.sqrt(x**2 + y**2)
     theta = m.atan2(rho, z)
@@ -36,8 +43,8 @@ def cil(x, y, z):
 
 def sfe(x, y, z):
     rho = m.sqrt(x**2 + y**2 + z**2)
-    theta = m.acos(z/rho)
-    phi = m.atan2(y, x)
+    theta = m.atan2(y, x)
+    phi = m.acos(z/rho)
     return rho, theta, phi
 
 def bin_edges(dati, finezza):
@@ -64,28 +71,28 @@ for line in f:
 f.close()
 
 plt.figure(figsize=(8, 5))
+#fig, axes = plt.subplots(1, 3, figsize=(12, 4))
 
 rhs = []
+rhs_S = []
 ths = []
+ths_s = []
 phs = []
+phs_s = []
+
 cls = []
-colore = ['r', 'g', 'b', 'k', 'm', 'c'] 
+colore = ['r', 'g', 'b', 'k', 'm', 'c']
+eve = 0
 for colpo in hits:
-    if (colpo.eveind != 0): break
-    #if (colpo.eveind != 0 or colpo.trkind !=0): break
-    #if (colpo.eveind == 0 and colpo.trkind ==0):
-    #if (colpo.eveind == 0):
-    rh, th = colpo.tocam()
-    rhs.append(rh)
-    ths.append(th)
-    #phs.append(ph)
-    cls.append(colore[colpo.layind])
-    #print(colpo())
+    if (colpo.eveind == eve):
+        rh, th = colpo.tocam()
+        rhs.append(rh)
+        ths.append(th)
+        cls.append(colore[colpo.layind])
+        fin = .5e-4
+        print(f"Finezza: {fin}")
 
-fin = 5e-4
-print(f"Finezza: {fin}")
-
-#"""
+"""
 plt.errorbar(ths, rhs, xerr=2*fin, linestyle='', marker='')
 plt.scatter(ths, rhs, color=cls)
 plt.title("Grafico di rho in funzione di theta")
