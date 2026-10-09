@@ -26,7 +26,8 @@ La larghezza di bin dev'essere variabile per evitare che zone
 troppo densamente popolate portino a conclusioni sbagliate
 
 4)
-Attualmente mi fermo qui
+Eseguo il fit della circonferenza per ottenere l'impulso
+(la sua componente ortogonale a B o trasversa in gergo)
 """
 class hit:
     def __init__(self, x, y, z, trkind, layind):
