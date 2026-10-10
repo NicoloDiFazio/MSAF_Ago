@@ -59,7 +59,7 @@ class event:
     def sync_sort(self):
         couple = sorted(list(zip(self.data, self.angle)),key=lambda a: a[1])
         dat, ang = map(list, zip(*couple))
-        return dat, ang
+        return event(sel.eveind, dat, ang)
     def data_print(self):
         for dat in self.data: print(str(dat))
     def ind_print(self):
@@ -92,7 +92,8 @@ def bin_edges(evento):
         bin_edge.append(ordine[-1])
     return bin_edge
 
-#def find(colpo, theta, bordi, finezza): #hit, list angoli, list di bordi (tutti i bordi sx + ultimo bordo dx)
+#def find(colpo, theta, bordi, finezza):
+#hit, list angoli, list di bordi (tutti i bordi sx + ultimo bordo dx)
     
     
 f = open('dati.txt', 'r')
@@ -129,14 +130,21 @@ for i, ax in enumerate(axes.flatten()):
     if i >= len(evs): break
     ev = evs[i]
     # ax.hist() restiuisce:
-    # array dei conteggi, array dei bordi dei bins, rettangolo grafici
+    # array dei conteggi, array dei bordi dei bins (sxs+dx), rettangolo grafici
     ccs, bbs, gr = ax.hist(ev.angle, bins=bin_edges(ev), edgecolor='blue')
     ax.set_title(f"Conteggi $\\theta$ dell'evento {ev.eveind}")
     ax.set_xlabel("theta")
     ax.set_ylabel("Conteggi")
     ax.grid(True, alpha=.5)
+
+    ev_ord = ev.syncsort()
+    
     for j, cc in enumerate(ccs):
         if cc >= 4:
+            bb_min = bbs[j]
+            bb_max = bbs[j+1]
+
+            
             
 
 plt.tight_layout()
