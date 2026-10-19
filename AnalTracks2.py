@@ -59,7 +59,7 @@ class event:
     def sync_sort(self):
         couple = sorted(list(zip(self.data, self.angle)),key=lambda a: a[1])
         dat, ang = map(list, zip(*couple))
-        return event(sel.eveind, dat, ang)
+        return event(self.eveind, dat, ang)
     def data_print(self):
         for dat in self.data: print(str(dat))
     def ind_print(self):
@@ -75,7 +75,17 @@ class event:
     #ne troppo grande (tracce lontane) ne troppo piccole
     #(stessa traccia). La consideriamo sigma/2 e prendiamo
     # 3*sigma come finezza
-    
+
+class track:
+    def __init__(self, trkind, x, y, z, theta):
+        self.trkind = trkind
+        self.x = x
+        self.y = y
+        self.z = z
+        self.theta = theta
+    def __call__(self):
+        return [self.x, self.y, self.z, self.theta]
+        
 def cam(x, y, z):
     rho = m.sqrt(x**2 + y**2)
     theta = m.atan2(rho, z)
@@ -98,9 +108,7 @@ def bin_edges(evento):
     
 f = open('dati.txt', 'r')
 l_evento = 0
-#evs_hits = []
 evs = []
-#ev_hit = event(l_evento) #eventi con xyz indtrk indlay
 ev = event(l_evento)     #eventi con rho, theta lungo piano trasverso
 
 for line in f:
@@ -108,9 +116,7 @@ for line in f:
     if len(lettura) == 1:
         if (int(lettura[0]) != l_evento):
             l_evento = int(lettura[0])
-            #evs_hits.append(ev_hit)
             evs.append(ev)
-            #ev_hitss = event(l_evento, [])
             ev = event(l_evento)
     elif len(lettura) == 5:
         the_hit = hit(float(lettura[0]), float(lettura[1]), float(lettura[2]),
@@ -125,7 +131,8 @@ for eve in evs:
     eve.angle_print()
 '''
 fig, axes = plt.subplots(2, m.ceil(len(evs)/2), figsize=(12, 4), sharey=True)
-
+#m.ceil restituisce l'intero arrotondando per eccesso
+tracce_eventi = []
 for i, ax in enumerate(axes.flatten()):
     if i >= len(evs): break
     ev = evs[i]
@@ -137,16 +144,39 @@ for i, ax in enumerate(axes.flatten()):
     ax.set_ylabel("Conteggi")
     ax.grid(True, alpha=.5)
 
-    ev_ord = ev.syncsort()
+    ev_ord = ev.sync_sort()
+    angles = ev_ord.angle
+    datas = ev_ord.data
+    k = 0
+    tracce = []
     
     for j, cc in enumerate(ccs):
         if cc >= 4:
             bb_min = bbs[j]
             bb_max = bbs[j+1]
-
-            
-            
-
+            traccia = event(j)
+            for a in range(k, len(angles) + 1):
+                if angles[a] >= bb_min and angles[a] < bb_max:
+                    traccia.append(datas[a])
+                    #print("dato appeso")
+                elif angles[a] >= bb_max:
+                    k = a
+                    #print("fine traccia")
+                    tracce.append(traccia)
+                    break
+    tracce_eventi.append(tracce)
+  
 plt.tight_layout()
 plt.show()
+
+for ind, traccias in enumerate(tracce_eventi):
+    fig, axes = plt.subplots(2, m.ceil(len(traccias)/2), figsize=(12, 4), sharey=True)
+    plt.suptitle(f"Tracce dell'evento {ind}")
+    for i, ax in enumerate(axes.flatten()):
+        if i >= len(traccias): break
+        tr = traccias[i]
+        #continua
+    
+    plt.show()
+
 #'''
