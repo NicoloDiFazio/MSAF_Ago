@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ROOT
 import math as m
+from iminuit import Minuit
 
 """
 Obbiettivo: cercare tracce, ovvero i punti con stesso 
@@ -75,17 +76,7 @@ class event:
     #ne troppo grande (tracce lontane) ne troppo piccole
     #(stessa traccia). La consideriamo sigma/2 e prendiamo
     # 3*sigma come finezza
-
-class track:
-    def __init__(self, trkind, x, y, z, theta):
-        self.trkind = trkind
-        self.x = x
-        self.y = y
-        self.z = z
-        self.theta = theta
-    def __call__(self):
-        return [self.x, self.y, self.z, self.theta]
-        
+     
 def cam(x, y, z):
     rho = m.sqrt(x**2 + y**2)
     theta = m.atan2(rho, z)
@@ -104,8 +95,28 @@ def bin_edges(evento):
 
 #def find(colpo, theta, bordi, finezza):
 #hit, list angoli, list di bordi (tutti i bordi sx + ultimo bordo dx)
-    
-    
+
+#Minuit
+def fcn(xc, yc, R):
+    dx = x - xc
+    dy = y - yc
+    dif = np.sqrt(dx**2 + dy**2)
+    sigma = (dx**2 * sigma_x**2 + dy**2 * sigma_y**2)/(dx**2 + dy**2)
+    return np.sum((dif - R)**2/sigma)
+
+#Parametri di generazione
+B = 1.0
+
+um = 1e-6
+xsize = 300 * um
+ysize = 50 * um
+zsize = 100 * um
+
+#errori sulle x, y e z dalla teoria dei rilevatori
+sigma_x = xsize / m.sqrt(12)
+sigma_y = ysize / m.sqrt(12)
+sigma_z = zsize / m.sqrt(12)
+
 f = open('dati.txt', 'r')
 l_evento = 0
 evs = []
@@ -125,11 +136,7 @@ for line in f:
 
 evs.append(ev)
 f.close()
-'''
-print(len(evs))
-for eve in evs:
-    eve.angle_print()
-'''
+
 fig, axes = plt.subplots(2, m.ceil(len(evs)/2), figsize=(12, 4), sharey=True)
 #m.ceil restituisce l'intero arrotondando per eccesso
 tracce_eventi = []
@@ -170,13 +177,37 @@ plt.tight_layout()
 plt.show()
 
 for ind, traccias in enumerate(tracce_eventi):
-    fig, axes = plt.subplots(2, m.ceil(len(traccias)/2), figsize=(12, 4), sharey=True)
+    fig, axes = plt.subplots(2, m.ceil(len(traccias)/2), figsize=(12, 4))
     plt.suptitle(f"Tracce dell'evento {ind}")
+    print(f"Evento {ind}")
     for i, ax in enumerate(axes.flatten()):
         if i >= len(traccias): break
         tr = traccias[i]
-        #continua
-    
-    plt.show()
+        x = np.array([dato.x for dato in tr.data])
+        y = np.array([dato.y for dato in tr.data])
+        #ax.plot(x, y, 'o', label='Hit traccia')
+        ax.errorbar(x, y, xerr=sigma_x, yerr=sigma_y, fmt = '.', label='Hit traccia')
+        xci = np.mean(x)
+        yci = np.mean(y)
+        Ri = np.mean(np.sqrt((x - xci)**2 + (y - yci)**2))
+        mi = Minuit(fcn, xc=xci, yc=yci, R=Ri)
+        mi.errordef = Minuit.LEAST_SQUARES
+        mi.migrad()
 
-#'''
+        theta = np.linspace(0, 2*np.pi, 200)
+        xc_f = mi.values['xc']
+        yc_f = mi.values['yc']
+        R_f = mi.values['R']
+        ax.plot(xc_f + R_f * np.cos(theta), yc_f + R_f * np.sin(theta), 'r--', label='Fit cerchio')
+        ax.set_aspect('equal', adjustable='datalim')
+        if mi.valid:
+            print("Il fit e' converso correttamente.")
+        else:
+            print("Attenzione: il fit non e' valido o non e' converso!")
+        chi2 = mi.fval
+        n_hit = len(x)
+        ndof = 2 * n_hit - 3  # 2 coordinate per ogni hit meno 3 parametri liberi (xc, yc, R)
+        chi2_ndof = chi2 / ndof if ndof > 0 else 0
+        print(f"Traccia {i}: Chi2/ndof = {chi2_ndof:.2f}")
+        
+    plt.show()
