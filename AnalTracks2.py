@@ -101,10 +101,10 @@ xsize = 300 * um
 ysize = 50 * um
 zsize = 100 * um
 
-#errori sulle x, y e z dalla teoria dei rilevatori
-sigma_x = xsize / m.sqrt(12)
-sigma_y = ysize / m.sqrt(12)
-sigma_z = zsize / m.sqrt(12)
+#errori sulle x, y e z
+sigma_x = xsize/m.sqrt(12)
+sigma_y = ysize/m.sqrt(12)
+sigma_z = zsize/m.sqrt(12)
 
 #Minuit
 def fcn(par):
@@ -112,7 +112,7 @@ def fcn(par):
             dx = x - xc
             dy = y - yc
             dif = np.sqrt(dx**2 + dy**2)
-            return np.sum((dif - R)**2 / sigma_sq)
+            return np.sum((dif - R)**2/sigma_sq)
 
 verbose = True
         
@@ -194,9 +194,9 @@ for ind, traccias in enumerate(tracce_eventi):
         xci = np.mean(x)
         yci = np.mean(y)
         Ri = np.mean(np.sqrt((x - xci)**2 + (y - yci)**2))
-        dx_init = x - xci
-        dy_init = y - yci
-        sigma_sq = (dx_init**2 * sigma_x**2 + dy_init**2 * sigma_y**2) / (dx_init**2 + dy_init**2)
+        dxi = x - xci
+        dyi = y - yci
+        sigma_sq = (dxi**2*sigma_x**2 + dyi**2*sigma_y**2)/(dxi**2 + dyi**2)
 
         par_init = [xci, yci, Ri]
         mi = Minuit(fcn, par_init, name=("xc", "yc", "R"))
@@ -208,7 +208,7 @@ for ind, traccias in enumerate(tracce_eventi):
         yc_f = mi.values['yc']
         R_f = mi.values['R']
         sigma_R_f = mi.errors['R']
-        ax.plot(xc_f + R_f * np.cos(theta), yc_f + R_f * np.sin(theta), 'r--', label='Fit cerchio')
+        ax.plot(xc_f + R_f*np.cos(theta), yc_f + R_f*np.sin(theta), 'r--', label='Fit cerchio')
         ax.set_aspect('equal', adjustable='datalim')
 
         if verbose:
