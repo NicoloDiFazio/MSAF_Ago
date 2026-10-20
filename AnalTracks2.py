@@ -76,6 +76,8 @@ class event:
     #cioe' prendiamo la differenza tra angoli che non sia
     #ne troppo grande (tracce lontane) ne troppo piccole
     #(stessa traccia).
+
+    #ora invece proviamo a prendere il quantile a .3
      
 def cam(x, y, z):
     rho = m.sqrt(x**2 + y**2)
