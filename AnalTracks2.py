@@ -114,6 +114,8 @@ def fcn(par):
             dif = np.sqrt(dx**2 + dy**2)
             return np.sum((dif - R)**2 / sigma_sq)
 
+verbose = True
+        
 f = open('dati.txt', 'r')
 l_evento = 0
 evs = []
@@ -157,7 +159,7 @@ for i, ax in enumerate(axes.flatten()):
     print(f"Evento {i}")
     for j, cc in enumerate(ccs):
         if cc >= 4:
-            if cc > 6:
+            if verbose & cc > 6:
                 print("############################")
                 print("problema di larghezza bin")
                 print("############################")
@@ -167,11 +169,11 @@ for i, ax in enumerate(axes.flatten()):
             for a in range(k, len(angles)):
                 if angles[a] >= bb_min and angles[a] < bb_max:
                     traccia.append(datas[a])
-                    print(datas[a])
+                    if verbose: print(datas[a])
                 elif angles[a] >= bb_max:
                     k = a
                     tracce.append(traccia)
-                    print("nuova traccia")
+                    if verbose: print("nuova traccia")
                     break
     tracce_eventi.append(tracce)
   
@@ -208,14 +210,15 @@ for ind, traccias in enumerate(tracce_eventi):
         sigma_R_f = mi.errors['R']
         ax.plot(xc_f + R_f * np.cos(theta), yc_f + R_f * np.sin(theta), 'r--', label='Fit cerchio')
         ax.set_aspect('equal', adjustable='datalim')
-        
-        if mi.valid:
-            print("Il fit e' converso correttamente.")
-        else:
-            print("Attenzione: il fit non e' valido o non e' converso!")
-        chi2 = mi.fval
-        ndof = 2*len(x)-3  #2 coordinate per ogni hit meno 3 parametri liberi (xc, yc, R)
-        print(f"Traccia {i}: Chi2/ndof = {chi2/ndof}")
+
+        if verbose:
+            if mi.valid:
+                print("Il fit e' converso correttamente.")
+            else:
+                print("Attenzione: il fit non e' valido o non e' converso!")
+            chi2 = mi.fval
+            ndof = 2*len(x)-3  #2 coordinate per ogni hit meno 3 parametri liberi (xc, yc, R)
+            print(f"Traccia {i}: Chi2/ndof = {chi2/ndof}")
 
         pT = 0.3*B*R_f
         sigma_pT = pT*sigma_R_f/R_f
