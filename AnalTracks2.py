@@ -70,12 +70,12 @@ class event:
     def fin(self):
         ordine = self.sort()
         differenze = np.diff(ordine)
-        return float(np.median(differenze)*1/2)
+        #return float(np.median(differenze)*0.275)
+        return float(np.quantile(differenze, 0.3))
     #prendiamo la mediana delle differenze degli angoli,
     #cioe' prendiamo la differenza tra angoli che non sia
     #ne troppo grande (tracce lontane) ne troppo piccole
-    #(stessa traccia). La consideriamo sigma/2 e prendiamo
-    # 3*sigma come finezza
+    #(stessa traccia).
      
 def cam(x, y, z):
     rho = m.sqrt(x**2 + y**2)
@@ -93,17 +93,6 @@ def bin_edges(evento):
         bin_edge.append(ordine[-1])
     return bin_edge
 
-#def find(colpo, theta, bordi, finezza):
-#hit, list angoli, list di bordi (tutti i bordi sx + ultimo bordo dx)
-
-#Minuit
-def fcn(xc, yc, R):
-    dx = x - xc
-    dy = y - yc
-    dif = np.sqrt(dx**2 + dy**2)
-    sigma = (dx**2 * sigma_x**2 + dy**2 * sigma_y**2)/(dx**2 + dy**2)
-    return np.sum((dif - R)**2/sigma)
-
 #Parametri di generazione
 B = 1.0
 
@@ -116,6 +105,14 @@ zsize = 100 * um
 sigma_x = xsize / m.sqrt(12)
 sigma_y = ysize / m.sqrt(12)
 sigma_z = zsize / m.sqrt(12)
+
+#Minuit
+def fcn(par):
+            xc, yc, R = par
+            dx = x - xc
+            dy = y - yc
+            dif = np.sqrt(dx**2 + dy**2)
+            return np.sum((dif - R)**2 / sigma_sq)
 
 f = open('dati.txt', 'r')
 l_evento = 0
@@ -156,20 +153,25 @@ for i, ax in enumerate(axes.flatten()):
     datas = ev_ord.data
     k = 0
     tracce = []
-    
+
+    print(f"Evento {i}")
     for j, cc in enumerate(ccs):
         if cc >= 4:
+            if cc > 6:
+                print("############################")
+                print("problema di larghezza bin")
+                print("############################")
             bb_min = bbs[j]
             bb_max = bbs[j+1]
             traccia = event(j)
-            for a in range(k, len(angles) + 1):
+            for a in range(k, len(angles)):
                 if angles[a] >= bb_min and angles[a] < bb_max:
                     traccia.append(datas[a])
-                    #print("dato appeso")
+                    print(datas[a])
                 elif angles[a] >= bb_max:
                     k = a
-                    #print("fine traccia")
                     tracce.append(traccia)
+                    print("nuova traccia")
                     break
     tracce_eventi.append(tracce)
   
@@ -185,12 +187,17 @@ for ind, traccias in enumerate(tracce_eventi):
         tr = traccias[i]
         x = np.array([dato.x for dato in tr.data])
         y = np.array([dato.y for dato in tr.data])
-        #ax.plot(x, y, 'o', label='Hit traccia')
         ax.errorbar(x, y, xerr=sigma_x, yerr=sigma_y, fmt = '.', label='Hit traccia')
+
         xci = np.mean(x)
         yci = np.mean(y)
         Ri = np.mean(np.sqrt((x - xci)**2 + (y - yci)**2))
-        mi = Minuit(fcn, xc=xci, yc=yci, R=Ri)
+        dx_init = x - xci
+        dy_init = y - yci
+        sigma_sq = (dx_init**2 * sigma_x**2 + dy_init**2 * sigma_y**2) / (dx_init**2 + dy_init**2)
+
+        par_init = [xci, yci, Ri]
+        mi = Minuit(fcn, par_init, name=("xc", "yc", "R"))
         mi.errordef = Minuit.LEAST_SQUARES
         mi.migrad()
 
@@ -198,16 +205,21 @@ for ind, traccias in enumerate(tracce_eventi):
         xc_f = mi.values['xc']
         yc_f = mi.values['yc']
         R_f = mi.values['R']
+        sigma_R_f = mi.errors['R']
         ax.plot(xc_f + R_f * np.cos(theta), yc_f + R_f * np.sin(theta), 'r--', label='Fit cerchio')
         ax.set_aspect('equal', adjustable='datalim')
+        
         if mi.valid:
             print("Il fit e' converso correttamente.")
         else:
             print("Attenzione: il fit non e' valido o non e' converso!")
         chi2 = mi.fval
-        n_hit = len(x)
-        ndof = 2 * n_hit - 3  # 2 coordinate per ogni hit meno 3 parametri liberi (xc, yc, R)
-        chi2_ndof = chi2 / ndof if ndof > 0 else 0
-        print(f"Traccia {i}: Chi2/ndof = {chi2_ndof:.2f}")
+        ndof = 2*len(x)-3  #2 coordinate per ogni hit meno 3 parametri liberi (xc, yc, R)
+        print(f"Traccia {i}: Chi2/ndof = {chi2/ndof}")
+
+        pT = 0.3*B*R_f
+        sigma_pT = pT*sigma_R_f/R_f
+        print(f"Raggio R: {R_f} +- {sigma_R_f} m")
+        print(f"Impulso pT: {pT} +- {sigma_pT} GeV/c")
         
     plt.show()
