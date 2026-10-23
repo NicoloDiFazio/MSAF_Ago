@@ -3,32 +3,13 @@ import matplotlib.pyplot as plt
 import ROOT
 import math as m
 from iminuit import Minuit
+from iminuit.cost import LeastSquares
 
 """
-Obbiettivo: cercare tracce, ovvero i punti con stesso 
-angolo polare lungo l'asse del rivelatore.
-
-1)
 Leggo i dati scritti come: 
 
 len(line) = 1 -> evento
 len(line) = 5 -> X Y Z IndiceTraccia IndiceLayer
-
-2)
-Converto i dati posizionali da X, Y, Z a
-rho = sqrt(x^2 + y^2): distanza radiale dell'hit
-      dall'asse del rivelatore z nel piano trasverso (x, y).
-theta = atan(rho/z): angolo polare rispetto all'asse z.
-
-3)
-Per ogni evento genero un istogramma che conti quante
-volte un determinato angolo e' stato raggiunto.
-La larghezza di bin dev'essere variabile per evitare che zone 
-troppo densamente popolate portino a conclusioni sbagliate
-
-4)
-Eseguo il fit della circonferenza per ottenere l'impulso
-(la sua componente ortogonale a B o trasversa in gergo)
 """
 class hit:
     def __init__(self, x, y, z, trkind, layind):
@@ -71,7 +52,8 @@ class event:
         ordine = self.sort()
         differenze = np.diff(ordine)
         #return float(np.median(differenze)*0.275)
-        return float(np.quantile(differenze, 0.3))
+        #return float(np.quantile(differenze, 0.3))
+        return sigma_f
     #prendiamo la mediana delle differenze degli angoli,
     #cioe' prendiamo la differenza tra angoli che non sia
     #ne troppo grande (tracce lontane) ne troppo piccole
@@ -116,8 +98,50 @@ def fcn(par):
             dif = np.sqrt(dx**2 + dy**2)
             return np.sum((dif - R)**2/sigma_sq)
 
-verbose = True
-        
+verbose = False
+
+f = open('test.txt', 'r')
+evento_test = event(0)
+for line in f:
+    lec = line.split()
+    h = hit(float(lec[0]), float(lec[1]), float(lec[2]), int(lec[3]), int(lec[4]))
+    evento_test.append(h)
+f.close()
+
+#plt.figure(figsize=(8, 5))
+
+n, bins, _ = plt.hist(evento_test.angle, bins = 15, label='Stesso angolo')
+
+centri = 0.5 * (bins[:-1] + bins[1:])
+err_n = np.sqrt(n)
+
+def gauss_fcn(x, A, mu, sigma):
+  return A * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+least_squares = LeastSquares(centri, n, err_n, gauss_fcn)
+
+# Stime iniziali dei parametri [Ampiezza, Media, Deviazione standard]
+A_i     = 160
+mu_i    = 0.5
+sigma_i = 0.00008
+
+m_fit = Minuit(least_squares, A=A_i, mu=mu_i, sigma=sigma_i)
+m_fit.migrad()
+m_fit.hesse()
+
+if verbose: print(m_fit)
+
+# Plot della curva gaussiana fittata
+x_f = np.linspace(centri[0], centri[-1], 300)
+A_f, mu_f, sigma_f = m_fit.values
+"""
+plt.plot(x_f, gauss_fcn(x_f, A_f, mu_f, sigma_f))
+plt.legend()
+plt.show()
+"""
+if verbose: print(sigma_f)
+
+
 f = open('dati.txt', 'r')
 l_evento = 0
 evs = []
@@ -146,22 +170,24 @@ for i, ax in enumerate(axes.flatten()):
     ev = evs[i]
     # ax.hist() restiuisce:
     # array dei conteggi, array dei bordi dei bins (sxs+dx), rettangolo grafici
-    ccs, bbs, gr = ax.hist(ev.angle, bins=bin_edges(ev), edgecolor='blue')
+    #ccs, bbs, gr = ax.hist(ev.angle, bins=bin_edges(ev), edgecolor='blue')
+    
+    ccs, bbs, gr = ax.hist(ev.angle, 6000, edgecolor='blue')
     ax.set_title(f"Conteggi $\\theta$ dell'evento {ev.eveind}")
     ax.set_xlabel("theta")
     ax.set_ylabel("Conteggi")
     ax.grid(True, alpha=.5)
-
+    
     ev_ord = ev.sync_sort()
     angles = ev_ord.angle
-    datas = ev_ord.data
+    datas  = ev_ord.data
     k = 0
     tracce = []
-
-    print(f"Evento {i}")
+    """
+    if verbose: print(f"Evento {i}")
     for j, cc in enumerate(ccs):
         if cc >= 4:
-            if verbose & cc > 6:
+            if verbose and cc > 6:
                 print("############################")
                 print("problema di larghezza bin")
                 print("############################")
@@ -178,14 +204,14 @@ for i, ax in enumerate(axes.flatten()):
                     if verbose: print("nuova traccia")
                     break
     tracce_eventi.append(tracce)
-  
+    """
 plt.tight_layout()
 plt.show()
-
+"""
 for ind, traccias in enumerate(tracce_eventi):
     fig, axes = plt.subplots(2, m.ceil(len(traccias)/2), figsize=(12, 4))
     plt.suptitle(f"Tracce dell'evento {ind}")
-    print(f"Evento {ind}")
+    if verbose: print(f"Evento {ind}")
     for i, ax in enumerate(axes.flatten()):
         if i >= len(traccias): break
         tr = traccias[i]
@@ -224,7 +250,9 @@ for ind, traccias in enumerate(tracce_eventi):
 
         pT = 0.3*B*R_f
         sigma_pT = pT*sigma_R_f/R_f
-        print(f"Raggio R: {R_f} +- {sigma_R_f} m")
-        print(f"Impulso pT: {pT} +- {sigma_pT} GeV/c")
+        if verbose:
+            print(f"Raggio R: {R_f} +- {sigma_R_f} m")
+            print(f"Impulso pT: {pT} +- {sigma_pT} GeV/c")
         
     plt.show()
+#"""

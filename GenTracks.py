@@ -39,7 +39,7 @@ def intersec(pos, trk, charge, xl):
 
     #Track parameters
     h = charge
-    R = 0.3*B*trk.Pt()
+    R = 10/3 * trk.Pt()/(h*B)
     phi0 = trk.Phi()+charge*ROOT.TMath.Pi()/2.0
 
     xc = pos.X()-R*m.cos(phi0)
@@ -79,6 +79,30 @@ mPi = 0.1396  # Massa del pione carico (GeV)
 rnd = ROOT.TRandom3()
 rnd.SetSeed(1234567)
 
+f = open('test.txt', 'w')
+ntracce = 100
+for j in range(0, ntracce):
+    traccia = ROOT.TLorentzVector()
+
+    pt    = 10
+    phi   = rnd.Rndm()*2*m.pi
+    #phi   = rnd.Rndm()*0.2-0.1
+    theta = 0.5
+
+    vec = ROOT.TVector3()
+    vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)
+    traccia.SetVectM(vec, mPi)
+
+    carica = 1
+
+    posizione = ROOT.TVector3(0, 0, 0)
+    for i in range(0, len(Xlayer)):
+        hits = intersec(posizione, traccia, carica, Xlayer[i])
+        the_hit = hit(*hits, j, i)
+        f.write(the_hit.tostr() + '\n')
+
+f.close()
+
 f = open('dati.txt', 'w')
 #MC per eventi
 for jevt in range(0,10): #n eventi
@@ -87,11 +111,11 @@ for jevt in range(0,10): #n eventi
     for j in range(0,ntrack): #n tracce
 
         trk   = ROOT.TLorentzVector()
-        costh = rnd.Rndm()*0.4-0.2
+        costh = rnd.Rndm()*2.0-1.0
         zref  = 0 #rnd.Rndm()*0.1-0.05
         
         pt    = 10
-        phi   = rnd.Rndm()*0.2-0.1
+        phi   = (rnd.Rndm()-0.5)*m.pi
         theta = m.acos(costh)
         
         v = ROOT.TVector3()
