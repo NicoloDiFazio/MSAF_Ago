@@ -97,8 +97,8 @@ for j in range(0, ntracce):
 
     posizione = ROOT.TVector3(0, 0, 0)
     for i in range(0, len(Xlayer)):
-        hits = intersec(posizione, traccia, carica, Xlayer[i])
-        the_hit = hit(*hits, j, i)
+        colpis = intersec(posizione, traccia, carica, Xlayer[i])
+        the_hit = hit(*colpis, j, i)
         f.write(the_hit.tostr() + '\n')
 
 f.close()
@@ -115,7 +115,7 @@ for jevt in range(0,10): #n eventi
         zref  = 0 #rnd.Rndm()*0.1-0.05
         
         pt    = 10
-        phi   = (rnd.Rndm()-0.5)*m.pi
+        phi   = rnd.Rndm()*m.pi/2.0
         theta = m.acos(costh)
         
         v = ROOT.TVector3()
