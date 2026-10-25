@@ -6,9 +6,9 @@ import math as m
 B = 1.0
 
 um = 1e-6
-xsize = 300 * um
-ysize = 50 * um
-zsize = 100 * um
+Xsizes = [300 * um] * 5
+Ysizes = [50 * um, 50 * um, 200 * um, 200 * um, 200 * um]
+Zsizes = [100 * um] * 5
 
 ###### Classi per i dati ######
 
@@ -33,7 +33,11 @@ class track:
         
 ###### Funzione per il calcolo dell'intersezione elica-piano ######
 
-def intersec(pos, trk, charge, xl):
+def intersec(pos, trk, charge, l_i):
+    xl = Xlayer[l_i]
+    xsize = Xsizes[l_i]
+    ysize = Ysizes[l_i]# * m.sqrt(12) 
+    zsize = Zsizes[l_i]
     #Intersection at the center of pixel
     xl_center = xl+xsize/2.0
 
@@ -45,7 +49,9 @@ def intersec(pos, trk, charge, xl):
     xc = pos.X()-R*m.cos(phi0)
     yc = pos.Y()-R*m.sin(phi0)
     
-    ang  = m.acos((xl-pos.X())/R+m.cos(phi0))
+    ang  = (xl_center-pos.X())/R+m.cos(phi0)
+    #print(ang)
+    ang = m.acos(ang)
     if phi0<0:
         ang  = -ang
 
@@ -72,22 +78,25 @@ def intersec(pos, trk, charge, xl):
 ###### Generazione e disegno degli "hit" ######
 
 #Geometria
-Xlayer = [0.05, 0.1, 0.15, 0.25, 0.35, 0.45]
+#Xlayer = [0.05, 0.1, 0.15, 0.25, 0.35, 0.45]
+Xlayer = [0.1, 0.2, 0.4, 0.6, 0.8]
 lim = 0.7
 
 mPi = 0.1396  # Massa del pione carico (GeV)
 rnd = ROOT.TRandom3()
 rnd.SetSeed(1234567)
 
-f = open('test.txt', 'w')
-ntracce = 100
+ft = open('test.txt', 'w')
+ntracce = 1000
 for j in range(0, ntracce):
     traccia = ROOT.TLorentzVector()
 
     pt    = 10
-    phi   = rnd.Rndm()*2*m.pi
-    #phi   = rnd.Rndm()*0.2-0.1
+    phi   = (rnd.Rndm()*2-1)*m.pi/4
+    #phi   = rnd.Rndm()*2-1
+    #phi = 0
     theta = 0.5
+    #theta   = rnd.Rndm()*2*m.pi
 
     vec = ROOT.TVector3()
     vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)
@@ -97,11 +106,11 @@ for j in range(0, ntracce):
 
     posizione = ROOT.TVector3(0, 0, 0)
     for i in range(0, len(Xlayer)):
-        colpis = intersec(posizione, traccia, carica, Xlayer[i])
+        colpis = intersec(posizione, traccia, carica, i)
         the_hit = hit(*colpis, j, i)
-        f.write(the_hit.tostr() + '\n')
+        ft.write(the_hit.tostr() + '\n')
 
-f.close()
+ft.close()
 
 f = open('dati.txt', 'w')
 #MC per eventi
@@ -115,7 +124,7 @@ for jevt in range(0,10): #n eventi
         zref  = 0 #rnd.Rndm()*0.1-0.05
         
         pt    = 10
-        phi   = rnd.Rndm()*m.pi/2.0
+        phi   = (rnd.Rndm()*2-1)*m.pi/4
         theta = m.acos(costh)
         
         v = ROOT.TVector3()
@@ -128,7 +137,7 @@ for jevt in range(0,10): #n eventi
             
         pos = ROOT.TVector3(0,0,zref)
         for i in range(0,len(Xlayer)):
-            hits = intersec(pos, trk, charge, Xlayer[i])
+            hits = intersec(pos, trk, charge, i)
             the_hit = hit(*hits, j, i)
             f.write(the_hit.tostr() + '\n')
             

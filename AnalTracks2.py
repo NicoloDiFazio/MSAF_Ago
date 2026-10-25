@@ -54,13 +54,7 @@ class event:
         #return float(np.median(differenze)*0.275)
         #return float(np.quantile(differenze, 0.3))
         return sigma_f
-    #prendiamo la mediana delle differenze degli angoli,
-    #cioe' prendiamo la differenza tra angoli che non sia
-    #ne troppo grande (tracce lontane) ne troppo piccole
-    #(stessa traccia).
-
-    #ora invece proviamo a prendere il quantile a .3
-     
+    
 def cam(x, y, z):
     rho = m.sqrt(x**2 + y**2)
     theta = m.atan2(rho, z)
@@ -81,14 +75,18 @@ def bin_edges(evento):
 B = 1.0
 
 um = 1e-6
+"""
 xsize = 300 * um
 ysize = 50 * um
 zsize = 100 * um
+"""
+Xsizes = [300 * um] * 5
+Ysizes = [50 * um, 50 * um, 200 * um, 200 * um, 200 * um]
+Zsizes = [100 * um] * 5
 
 #errori sulle x, y e z
-sigma_x = xsize/m.sqrt(12)
-sigma_y = ysize/m.sqrt(12)
-sigma_z = zsize/m.sqrt(12)
+def sig(coord):
+    return coord/m.sqrt(12)
 
 #Minuit
 def fcn(par):
@@ -98,7 +96,10 @@ def fcn(par):
             dif = np.sqrt(dx**2 + dy**2)
             return np.sum((dif - R)**2/sigma_sq)
 
-verbose = False
+
+risposta = input("output verboso? (y/n o t/f) ").strip().lower()
+verbose = risposta in ["y", "t"]
+#verbose = True
 
 f = open('test.txt', 'r')
 evento_test = event(0)
@@ -121,9 +122,9 @@ def gauss_fcn(x, A, mu, sigma):
 least_squares = LeastSquares(centri, n, err_n, gauss_fcn)
 
 # Stime iniziali dei parametri [Ampiezza, Media, Deviazione standard]
-A_i     = 160
+A_i     = 1e3
 mu_i    = 0.5
-sigma_i = 0.00008
+sigma_i = 3e-7 
 
 m_fit = Minuit(least_squares, A=A_i, mu=mu_i, sigma=sigma_i)
 m_fit.migrad()
@@ -134,11 +135,11 @@ if verbose: print(m_fit)
 # Plot della curva gaussiana fittata
 x_f = np.linspace(centri[0], centri[-1], 300)
 A_f, mu_f, sigma_f = m_fit.values
-"""
+
 plt.plot(x_f, gauss_fcn(x_f, A_f, mu_f, sigma_f))
 plt.legend()
 plt.show()
-"""
+
 if verbose: print(sigma_f)
 
 
@@ -172,18 +173,18 @@ for i, ax in enumerate(axes.flatten()):
     # array dei conteggi, array dei bordi dei bins (sxs+dx), rettangolo grafici
     #ccs, bbs, gr = ax.hist(ev.angle, bins=bin_edges(ev), edgecolor='blue')
     
-    ccs, bbs, gr = ax.hist(ev.angle, 6000, edgecolor='blue')
+    ccs, bbs, gr = ax.hist(ev.angle, 100000, edgecolor='blue')
     ax.set_title(f"Conteggi $\\theta$ dell'evento {ev.eveind}")
     ax.set_xlabel("theta")
     ax.set_ylabel("Conteggi")
     ax.grid(True, alpha=.5)
-    
+    """
     ev_ord = ev.sync_sort()
     angles = ev_ord.angle
     datas  = ev_ord.data
     k = 0
     tracce = []
-    """
+    
     if verbose: print(f"Evento {i}")
     for j, cc in enumerate(ccs):
         if cc >= 4:
@@ -204,7 +205,7 @@ for i, ax in enumerate(axes.flatten()):
                     if verbose: print("nuova traccia")
                     break
     tracce_eventi.append(tracce)
-    """
+"""
 plt.tight_layout()
 plt.show()
 """
