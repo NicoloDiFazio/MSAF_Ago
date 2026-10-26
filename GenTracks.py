@@ -36,7 +36,7 @@ class track:
 def intersec(pos, trk, charge, l_i):
     xl = Xlayer[l_i]
     xsize = Xsizes[l_i]
-    ysize = Ysizes[l_i]# * m.sqrt(12) 
+    ysize = Ysizes[l_i] 
     zsize = Zsizes[l_i]
     #Intersection at the center of pixel
     xl_center = xl+xsize/2.0
@@ -93,10 +93,7 @@ for j in range(0, ntracce):
 
     pt    = 10
     phi   = (rnd.Rndm()*2-1)*0.1
-    #phi   = rnd.Rndm()*2-1
-    #phi = 0
     theta = 0.5
-    #theta   = rnd.Rndm()*2*m.pi
 
     vec = ROOT.TVector3()
     vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)
@@ -121,7 +118,7 @@ for jevt in range(0,10): #n eventi
 
         trk   = ROOT.TLorentzVector()
         costh = rnd.Rndm()*2.0-1.0
-        zref  = 0 #rnd.Rndm()*0.1-0.05
+        zref  = 0
         
         pt    = 10
         phi   = (rnd.Rndm()*2-1)*0.1
