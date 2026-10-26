@@ -181,7 +181,7 @@ for i, ax in enumerate(axes.flatten()):
     # array dei conteggi, array dei bordi dei bins (sxs+dx), rettangolo grafici
     #ccs, bbs, gr = ax.hist(ev.angle, bins=bin_edges(ev), edgecolor='blue')
     
-    ccs, bbs, gr = ax.hist(ev.angle, 2*l, edgecolor='blue')
+    ccs, bbs, gr = ax.hist(ev.angle, 10, edgecolor='blue')
     ax.set_title(f"Conteggi $\\theta$ dell'evento {ev.eveind}")
     ax.set_xlabel("theta")
     ax.set_ylabel("Conteggi")
