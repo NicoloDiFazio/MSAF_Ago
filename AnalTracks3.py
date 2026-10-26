@@ -166,7 +166,7 @@ evs.append(ev)
 f.close()
 
 tracce_eventi = []
-l = 10*sigma_f
+l = 4*sigma_f
 
 for evento in evs:
     tracce = []
@@ -190,10 +190,12 @@ for evento in evs:
                 a_prec = ev.angle[i+1]
     tracce_eventi.append(tracce)
     if verbose: print("messe liste tracce in liste eventi")
-
-
 #"""
+ptss = []
+sptss = []
 for ind, traccias in enumerate(tracce_eventi):
+    pts = []
+    spts = []
     fig, axes = plt.subplots(10, m.ceil(len(traccias)/10), figsize=(12, 4))
     plt.suptitle(f"Tracce dell'evento {ind}")
     if verbose: print(f"Evento {ind}")
@@ -204,7 +206,7 @@ for ind, traccias in enumerate(tracce_eventi):
         sx = np.array([sig(Xsizes[dato.layind]) for dato in tr.data])
         y = np.array([dato.y for dato in tr.data])
         sy = np.array([sig(Ysizes[dato.layind]) for dato in tr.data])
-        ax.errorbar(x, y, sx, sy, fmt = '.', label='Hit traccia')
+        ax.errorbar(x, y, xerr=sx, yerr=sy, fmt = '.', label='Hit traccia')
 
         xci = np.mean(x)
         yci = np.mean(y)
@@ -231,10 +233,22 @@ for ind, traccias in enumerate(tracce_eventi):
             print(f"Traccia {i}: Chi2/ndof = {chi2/ndof}")
 
         pT = 0.3*B*Rf
-        sigma_pT = pT*sRf/Rf
+        spT = pT*sRf/Rf
         if verbose:
             print(f"Raggio R: {Rf} +- {sRf} m")
-            print(f"Impulso pT: {pT} +- {sigma_pT} GeV/c")
-        
+            print(f"Impulso pT: {pT} +- {spT} GeV/c")
+        pts.append(pT)
+        spts.append(spT)
+    ptss.append(pts)
+    sptss.append(spts)
+    plt.tight_layout()
+    plt.show()
+    plt.close(fig)
+
+for i, p in enumerate(ptss):
+    sp = sptss[i]
+    x = np.array([j for j, pt in enumerate(p)])
+    plt.figure(figsize=(8, 5))
+    plt.errorbar(x, p, sp, fmt='.', linewidth=2)
     plt.show()
 #"""
