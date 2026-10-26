@@ -210,7 +210,7 @@ for ind, traccias in enumerate(tracce_eventi):
 
         xci = np.mean(x)
         yci = np.mean(y)
-        Ri = np.mean(np.sqrt((x - xci)**2 + (y - yci)**2))
+        Ri = 33.0
         mi = Minuit(fcn, xc = xci, yc = yci, R = Ri)
         mi.errordef = Minuit.LEAST_SQUARES
         mi.migrad()

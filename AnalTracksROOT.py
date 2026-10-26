@@ -96,7 +96,7 @@ c = TCanvas("c", "Fit Distribuzione Angolare", 800, 600)
 
 # Costruttore: TH1D(nome, titolo_con_assi, nbins, xlow, xup)
 thm, thM = min(evento_test.angle), max(evento_test.angle)
-h_test = TH1D("h_test", "Distribuzione degli angoli a theta fissato; Theta; Conteggi", 15, thm, thM)
+h_test = TH1D("h_test", "Distribuzione degli angoli a theta fissato; Theta; Conteggi", 50, thm, thM)
 for ang in evento_test.angle: h_test.Fill(ang)
 
 h_test.SetFillColor(38) # Azzurro
@@ -110,7 +110,7 @@ mu_i    = 0.5
 sigma_i = h_test.GetRMS()
 
 fit_test.SetParameters(A_i, mu_i, sigma_i)
-h_test.Fit("gaus")
+h_test.Fit("fit_test")
 
 A_f,  mu_f,  sigma_f  = (fit_test.GetParameter(i) for i in range(3))
 eA_f, emu_f, esigma_f = (fit_test.GetParError(i)  for i in range(3))
@@ -119,13 +119,16 @@ chi2, ndf, p_value = fit_test.GetChisquare(), fit_test.GetNDF(), fit_test.GetPro
 
 if verbose:
     print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
-    print(f"$$mu$$ = {mu_f:.3f} +/- {emu_f:.3f} keV")
-    print(f"$$sigma$$ = {sigma_f:.3f} +/- {esigma_f:.3f} keV")
+    print(f"mu = {mu_f:.2e} +/- {emu_f:.2e} rad")
+    print(f"sigma = {sigma_f:.2e} +/- {esigma_f:.2e} rad")
 
 h_test.Draw("E") # Disegna l'istogramma con le barre d'errore
 c.Update() # Mantiene aperta la finestra grafica ROOT
-gApplication.Run(True)
-"""
+
+#################################################
+#              ANALISI EFFETTIVA                #
+#################################################
+
 f = open('dati.txt', 'r')
 l_evento = 0
 evs = []
@@ -146,90 +149,33 @@ for line in f:
 evs.append(ev)
 f.close()
 
+c1 = TCanvas("c1", "Distribuzione Angolare dei Dati divisi per evento", 800, 600)
+col = 5
+row = 2
+c1.Divide(col, row)
+
 tracce_eventi = []
-l = 4*sigma_f
+lar = 4*sigma_f
 
-for evento in evs:
-    tracce = []
-    indice = 0
-    traccia = event(indice)
-    ev = evento.sync_sort()
-    a_prec = ev.angle[0]
-    for i, angolo in enumerate(ev.angle):
-        if angolo - a_prec <= l and traccia.len() < 5:
-            traccia.append(ev.data[i])
-            if verbose: print("messo hit in traccia")
-        elif angolo - a_prec > l or traccia.len() == 5:
-            if traccia.len() >= 3:
-                tracce.append(traccia)
-                if verbose: print("messa traccia in lista tracce")
-            elif traccia.len() < 3:                
-                if verbose: print("traccia skippata")
-            indice += 1
-            traccia = event(indice)
-            if i+1 < ev.len():
-                a_prec = ev.angle[i+1]
-    tracce_eventi.append(tracce)
-    if verbose: print("messe liste tracce in liste eventi")
+lista_histo = []
+for i, ev in enumerate(evs):
+    c1.cd(i+1)
+    thm, thM = min(ev.angle), max(ev.angle)
+    h = TH1D(f"h {i}", f"Evento {i}; Theta; Conteggi", 60000, thm, thM)
+    for ang in ev.angle: h.Fill(ang)
 
-ptss = []
-sptss = []
-for ind, traccias in enumerate(tracce_eventi):
-    pts = []
-    spts = []
-    fig, axes = plt.subplots(10, m.ceil(len(traccias)/10), figsize=(12, 4))
-    plt.suptitle(f"Tracce dell'evento {ind}")
-    if verbose: print(f"Evento {ind}")
-    for i, ax in enumerate(axes.flatten()):
-        if i >= len(traccias): break
-        tr = traccias[i]
-        x = np.array([dato.x for dato in tr.data])
-        sx = np.array([sig(Xsizes[dato.layind]) for dato in tr.data])
-        y = np.array([dato.y for dato in tr.data])
-        sy = np.array([sig(Ysizes[dato.layind]) for dato in tr.data])
-        ax.errorbar(x, y, xerr=sx, yerr=sy, fmt = '.', label='Hit traccia')
+    h.SetFillColor(38) # Azzurro
+    h.SetLineColor(4) # Blu
+    h.SetLineWidth(2)
 
-        xci = np.mean(x)
-        yci = np.mean(y)
-        Ri = 33
-        mi = Minuit(fcn, xc = xci, yc = yci, R = Ri)
-        mi.errordef = Minuit.LEAST_SQUARES
-        mi.migrad()
+    h.Draw("HIST")
+    lista_histo.append(h)
+    print(f"Larghezza bin/4sigma = {h.GetXaxis().GetBinWidth(0)/(4*sigma_f)}")
+    
+c1.Update()
+c1.Modified()
 
-        theta = np.linspace(0, 2*np.pi, 200)
-        xcf = mi.values['xc']
-        ycf = mi.values['yc']
-        Rf = mi.values['R']
-        sRf = mi.errors['R']
-        ax.plot(xcf + Rf*np.cos(theta), ycf + Rf*np.sin(theta), 'r--', label='Fit cerchio')
-        ax.set_aspect('equal', adjustable='datalim')
+#for hist in lista_histo:
+    
 
-        if verbose:
-            if mi.valid:
-                print("Il fit e' converso correttamente.")
-            else:
-                print("Attenzione: il fit non e' valido o non e' converso!")
-            chi2 = mi.fval
-            ndof = 2*len(x)-3  #2 coordinate per ogni hit meno 3 parametri liberi (xc, yc, R)
-            print(f"Traccia {i}: Chi2/ndof = {chi2/ndof}")
-
-        pT = 0.3*B*Rf
-        spT = pT*sRf/Rf
-        if verbose:
-            print(f"Raggio R: {Rf} +- {sRf} m")
-            print(f"Impulso pT: {pT} +- {spT} GeV/c")
-        pts.append(pT)
-        spts.append(spT)
-    ptss.append(pts)
-    sptss.append(spts)
-    plt.tight_layout()
-    plt.show()
-    plt.close(fig)
-
-for i, p in enumerate(ptss):
-    sp = sptss[i]
-    x = np.array([j for j, pt in enumerate(p)])
-    plt.figure(figsize=(8, 5))
-    plt.errorbar(x, p, sp, fmt='.', linewidth=2)
-    plt.show()
-#"""
+gApplication.Run(True)
