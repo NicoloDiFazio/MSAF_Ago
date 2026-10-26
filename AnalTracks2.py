@@ -109,7 +109,7 @@ for line in f:
     evento_test.append(h)
 f.close()
 
-#plt.figure(figsize=(8, 5))
+plt.figure(figsize=(8, 5))
 
 n, bins, _ = plt.hist(evento_test.angle, bins = 15, label='Stesso angolo')
 
@@ -122,9 +122,9 @@ def gauss_fcn(x, A, mu, sigma):
 least_squares = LeastSquares(centri, n, err_n, gauss_fcn)
 
 # Stime iniziali dei parametri [Ampiezza, Media, Deviazione standard]
-A_i     = 1e3
+A_i     = 1.1e3
 mu_i    = 0.5
-sigma_i = 3e-7 
+sigma_i = 3e-5
 
 m_fit = Minuit(least_squares, A=A_i, mu=mu_i, sigma=sigma_i)
 m_fit.migrad()
@@ -173,7 +173,7 @@ for i, ax in enumerate(axes.flatten()):
     # array dei conteggi, array dei bordi dei bins (sxs+dx), rettangolo grafici
     #ccs, bbs, gr = ax.hist(ev.angle, bins=bin_edges(ev), edgecolor='blue')
     
-    ccs, bbs, gr = ax.hist(ev.angle, 100000, edgecolor='blue')
+    ccs, bbs, gr = ax.hist(ev.angle, 3, edgecolor='blue')
     ax.set_title(f"Conteggi $\\theta$ dell'evento {ev.eveind}")
     ax.set_xlabel("theta")
     ax.set_ylabel("Conteggi")
