@@ -99,31 +99,23 @@ thm, thM = min(evento_test.angle), max(evento_test.angle)
 h_test = TH1D("h_test", "Distribuzione degli angoli a theta fissato; Theta; Conteggi", 15, thm, thM)
 for ang in evento_test.angle: h_test.Fill(ang)
 
-# Personalizzazione estetica
-h_test.SetFillColor(38) # Azzurro tenue
+h_test.SetFillColor(38) # Azzurro
 h_test.SetLineColor(4) # Blu
 h_test.SetLineWidth(2)
 
-fit_test = TF1("fit_test", "[0] * exp(-0.5 *pow((x - [1]) / [2], 2))", thm, thM)
+fit_test = TF1("fit_test", "gaus", thm, thM)
 
-A_i     = 1.1e3
+A_i     = h_test.GetMaximum()
 mu_i    = 0.5
-sigma_i = 2e-6
+sigma_i = h_test.GetRMS()
 
 fit_test.SetParameters(A_i, mu_i, sigma_i)
-h_test.Fit("fit_test")
+h_test.Fit("gaus")
 
-A_f = fit_test.GetParameter(0)
-mu_f = fit_test.GetParameter(1)
-sigma_f = fit_test.GetParameter(2)
+A_f,  mu_f,  sigma_f  = (fit_test.GetParameter(i) for i in range(3))
+eA_f, emu_f, esigma_f = (fit_test.GetParError(i)  for i in range(3))
 
-eA_f = fit_test.GetParError(0)
-emu_f = fit_test.GetParError(1)
-esigma_f = fit_test.GetParError(2)
-
-chi2 = fit_test.GetChisquare()
-ndf = fit_test.GetNDF()
-p_value = fit_test.GetProb()
+chi2, ndf, p_value = fit_test.GetChisquare(), fit_test.GetNDF(), fit_test.GetProb()
 
 if verbose:
     print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
