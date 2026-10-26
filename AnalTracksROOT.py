@@ -92,7 +92,7 @@ for line in f:
     evento_test.append(h)
 f.close()
 
-c = TCanvas("c", "Fit Distribuzione Angolare", 800, 600)
+c0 = TCanvas("c0", "Fit Distribuzione Angolare", 800, 600)
 
 # Costruttore: TH1D(nome, titolo_con_assi, nbins, xlow, xup)
 thm, thM = min(evento_test.angle), max(evento_test.angle)
@@ -123,7 +123,7 @@ if verbose:
     print(f"sigma = {sigma_f:.2e} +/- {esigma_f:.2e} rad")
 
 h_test.Draw("E") # Disegna l'istogramma con le barre d'errore
-c.Update() # Mantiene aperta la finestra grafica ROOT
+c0.Update() # Mantiene aperta la finestra grafica ROOT
 
 #################################################
 #              ANALISI EFFETTIVA                #
@@ -154,28 +154,65 @@ col = 5
 row = 2
 c1.Divide(col, row)
 
-tracce_eventi = []
-lar = 4*sigma_f
-
 lista_histo = []
 for i, ev in enumerate(evs):
     c1.cd(i+1)
     thm, thM = min(ev.angle), max(ev.angle)
-    h = TH1D(f"h {i}", f"Evento {i}; Theta; Conteggi", 60000, thm, thM)
+    #nb = int((thM - thm)/(sigma_f*4))
+    nb = 100000
+    #print(nb)
+    h = TH1D(f"h {i}", f"Evento {i}; Theta; Conteggi", nb, thm, thM)
     for ang in ev.angle: h.Fill(ang)
 
     h.SetFillColor(38) # Azzurro
     h.SetLineColor(4) # Blu
     h.SetLineWidth(2)
-
+    
     h.Draw("HIST")
     lista_histo.append(h)
-    print(f"Larghezza bin/4sigma = {h.GetXaxis().GetBinWidth(0)/(4*sigma_f)}")
+    #print(f"Larghezza bin = {h.GetXaxis().GetBinWidth(0)/(sigma_f)}sigma")
     
 c1.Update()
 c1.Modified()
 
-#for hist in lista_histo:
-    
+c2 = TCanvas("c2", "Distribuzione Angolare dei Dati divisi per evento", 800, 600)
+lista_histo[0].Draw("HIST")
+c2.Update()
 
+lar = 4*sigma_f
+listaTracceEventi = []
+for i, hist in enumerate(lista_histo):
+    listaTracce = []
+    ev = evs[i].sync_sort()
+    a_0 = ev.angle[0]
+    j_0 = hist.FindBin(a_0)
+    c_0 = hist.GetBinContent(j_0)
+
+    indice = 0
+    traccia = event(indice)    
+    
+    for angint, angolo in enumerate(ev.angle):
+        j = hist.FindBin(angolo)
+        c = hist.GetBinContent(j)
+        if j != j_0 and ((c + c_0) > 5 or (angolo - a_0) > lar):
+            if (traccia.len()>3):listaTracce.append(traccia)
+            indice += 1
+            traccia = event(indice)
+            traccia.append(ev.data[angint])
+            a_0 = angolo
+        else:
+            traccia.append(ev.data[angint])
+        c_0 = traccia.len()
+        j_0 = j
+    listaTracce.append(traccia)
+    som = 0
+    """
+    for tr in listaTracce:
+        som += 1
+        print(f"angolo numero {som}/{len(listaTracce)}")
+        tr.angle_print()
+    """
+    listaTracceEventi.append(listaTracce)
+    print(f"evento numero {i}, tracce trovate {len(listaTracce)} su {ev.len()/5}, efficenza di {(len(listaTracce)/(ev.len()/5)):.2f}")
+    
 gApplication.Run(True)
