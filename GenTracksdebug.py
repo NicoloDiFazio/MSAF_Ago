@@ -134,8 +134,8 @@ for jevt in range(0, nevent): #n eventi
         trk.SetVectM(v,mPi)
         
         charge = 1
-        if rnd.Rndm()<0.5:
-            charge = -1
+        #if rnd.Rndm()<0.5:
+        #    charge = -1
             
         pos = ROOT.TVector3(0,0,zref)
         for i in range(0,len(Xlayer)):
