@@ -180,8 +180,8 @@ for i, ax in enumerate(axes.flatten()):
     # ax.hist() restiuisce:
     # array dei conteggi, array dei bordi dei bins (sxs+dx), rettangolo grafici
     #ccs, bbs, gr = ax.hist(ev.angle, bins=bin_edges(ev), edgecolor='blue')
-    
-    ccs, bbs, gr = ax.hist(ev.angle, 3, edgecolor='blue')
+    costh = [m.cos(a) for a in ev.angle]
+    ccs, bbs, gr = ax.hist(costh, 100, edgecolor='blue')
     ax.set_title(f"Conteggi $\\theta$ dell'evento {ev.eveind}")
     ax.set_xlabel("theta")
     ax.set_ylabel("Conteggi")

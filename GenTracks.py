@@ -92,7 +92,7 @@ for j in range(0, ntracce):
     traccia = ROOT.TLorentzVector()
 
     pt    = 10
-    phi   = (rnd.Rndm()*2-1)*m.pi/4
+    phi   = (rnd.Rndm()*2-1)*0.1
     #phi   = rnd.Rndm()*2-1
     #phi = 0
     theta = 0.5
@@ -124,7 +124,7 @@ for jevt in range(0,10): #n eventi
         zref  = 0 #rnd.Rndm()*0.1-0.05
         
         pt    = 10
-        phi   = (rnd.Rndm()*2-1)*m.pi/4
+        phi   = (rnd.Rndm()*2-1)*0.1
         theta = m.acos(costh)
         
         v = ROOT.TVector3()
@@ -132,8 +132,6 @@ for jevt in range(0,10): #n eventi
         trk.SetVectM(v,mPi)
         
         charge = 1
-        if rnd.Rndm()<0.5:
-            charge = -1
             
         pos = ROOT.TVector3(0,0,zref)
         for i in range(0,len(Xlayer)):

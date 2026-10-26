@@ -111,7 +111,7 @@ for j in range(0, ntracce):
         ft.write(the_hit.tostr() + '\n')
 
 ft.close()
-c = [-0.9, 0, 0.9]
+c = [-0.9999, 0, 0.9999]
 f = open('datidebug.txt', 'w')
 #MC per eventi
 nevent = 10
@@ -133,10 +133,11 @@ for jevt in range(0, nevent): #n eventi
         v.SetMagThetaPhi(pt/m.sin(theta),theta,phi)
         trk.SetVectM(v,mPi)
         
-        charge = 1
-        #if rnd.Rndm()<0.5:
-        #    charge = -1
-            
+        charge = -1
+        """
+        if rnd.Rndm()<0.5:
+            charge = -1
+           """ 
         pos = ROOT.TVector3(0,0,zref)
         for i in range(0,len(Xlayer)):
             hits = intersec(pos, trk, charge, i)
