@@ -175,7 +175,7 @@ for i, ev in enumerate(evs):
 c1.Modified()
 c1.Update()
 
-lar = sigma_f*16
+lar = sigma_f*8
 listaTracceEventi = []
 tr_tro = []
 tr_tot = []
@@ -205,7 +205,7 @@ for i, hist in enumerate(lista_histo):
         j = hist.FindBin(angolo)
         c = hist.GetBinContent(j)
         if j != j_0 and ((c + c_0) > 5 or (angolo - a_0) > lar):
-            if (traccia.len()>3):listaTracce.append(traccia)
+            if (traccia.len()>=3):listaTracce.append(traccia)
             indice += 1
             traccia = event(indice)
             traccia.append(ev.data[angint])
@@ -231,9 +231,12 @@ for i, hist in enumerate(lista_histo):
         print(f"evento numero {i}")
         print(f"tracce trovate {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
 
+input("Sei pronto?")
 listaGrafici = []
 Rs = []
 eRs = []
+ps = []
+somma = 0
 for eint, e in enumerate(listaTracceEventi):
     c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
     col = 10
@@ -250,29 +253,27 @@ for eint, e in enumerate(listaTracceEventi):
         listaGrafici.append(g)
         
         xm, xM = min(x), max(x)
-        #circ = "[0]+TMath::Sign(1.0, [1])*sqrt(pow([2], 2) - pow(x - [3], 2))"
         circ = "[0]+sqrt(pow([1], 2) - pow(x - [2], 2))"
         f_circ = TF1(f"f_circ_{tint}", circ, xm, xM)
         yci  = 0.1
-        #sign = 1
         ri   = 33.0
         xci  = 0.1
         
         f_circ.SetParameters(yci, ri, xci)
         f_circ.SetParLimits(1, 30.0, 40.0)
-        g.Fit(f"f_circ_{tint}", "R")
+        g.Fit(f_circ, "RQ")
         g.Draw("AP")
         ycf,  Rf,  xcf  = (f_circ.GetParameter(i) for i in range(3))
         eycf, eRf, exff = (f_circ.GetParError(i)  for i in range(3))
-        Rs.append(Rf)
-        eRs.append(eRf)
         chi2, ndf, p_value = f_circ.GetChisquare(), f_circ.GetNDF(), f_circ.GetProb()
+        if p_value >= 0.05:
+            Rs.append(Rf)
+            eRs.append(eRf)
+            ps.append(p_value)
         
-        if True:
+        if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
-            print(f"mu = {mu_f:.2e} +/- {emu_f:.2e} rad")
-            print(f"sigma = {sigma_f:.2e} +/- {esigma_f:.2e} rad")
-            
+    somma += len(e)
             
     c3.Modified()
     c3.Update()
@@ -281,8 +282,10 @@ for eint, e in enumerate(listaTracceEventi):
 for rind, r in enumerate(Rs):
     pT = 0.3*B*r
     epT = pT*eRs[rind]/r
-    print(f" R = {r} +- {eRs[rind]} m")
-    print(f"Impulso pT: {pT} +- {epT} GeV/c")
+    print(f"Raggio R = {r} +- {eRs[rind]} m")
+    print(f"Impulso pT = {pT} +- {epT} GeV/c")
+    print(f"p_value = {ps[rind]}")
 
+print(f"Ho trovato {len(Rs)} impulsi su {somma}")
 #"""    
 gApplication.Run(True)
