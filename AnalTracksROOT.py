@@ -280,7 +280,10 @@ for eint, e in enumerate(listaTracceEventi):
         lista_canvas.append(c3)
 
 for rind, r in enumerate(Rs):
-    print(f" R = {r} +- {eRs[rind]}")
+    pT = 0.3*B*Rf
+    epT = pT*eRs[rind]/Rf
+    print(f" R = {r} +- {eRs[rind]} m")
+    print(f"Impulso pT: {pT} +- {epT} GeV/c")
 
 #"""    
 gApplication.Run(True)
