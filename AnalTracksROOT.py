@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ROOT import TCanvas, TH1D, TF1, gApplication
+from ROOT import TCanvas, TH1D, TF1, gApplication, TGraphErrors
 import math as m
 from iminuit import Minuit
 from iminuit.cost import LeastSquares
@@ -159,9 +159,9 @@ for i, ev in enumerate(evs):
     c1.cd(i+1)
     thm, thM = min(ev.angle), max(ev.angle)
     #nb = int((thM - thm)/(sigma_f*4))
-    nb = 100000
+    nb = 1000000
     #print(nb)
-    h = TH1D(f"h {i}", f"Evento {i}; Theta; Conteggi", nb, thm, thM)
+    h = TH1D(f"h_{i}", f"Evento {i}; Theta; Conteggi", nb, thm, thM)
     for ang in ev.angle: h.Fill(ang)
 
     h.SetFillColor(38) # Azzurro
@@ -170,18 +170,28 @@ for i, ev in enumerate(evs):
     
     h.Draw("HIST")
     lista_histo.append(h)
-    #print(f"Larghezza bin = {h.GetXaxis().GetBinWidth(0)/(sigma_f)}sigma")
-    
-c1.Update()
+    if verbose: print(f"Larghezza bin = {h.GetXaxis().GetBinWidth(0)/(sigma_f)}sigma")
+
 c1.Modified()
+c1.Update()
 
-c2 = TCanvas("c2", "Distribuzione Angolare dei Dati divisi per evento", 800, 600)
-lista_histo[0].Draw("HIST")
-c2.Update()
-
-lar = 4*sigma_f
+lar = sigma_f*16
 listaTracceEventi = []
+tr_tro = []
+tr_tot = []
+lista_canvas = []
+
+risposta = input("vuoi visualizzare i grafici specifici? (y/n o t/f) ").strip().lower()
+allgraph = risposta in ["y", "t"]
+
+
 for i, hist in enumerate(lista_histo):
+    if allgraph:
+        c2 = TCanvas(f"c2_{i}", f"Distribuzione Angolare dei Dati dell' evento {i}", 800, 600)
+        hist.Draw("HIST")
+        c2.Modified()
+        c2.Update()
+        lista_canvas.append(c2)
     listaTracce = []
     ev = evs[i].sync_sort()
     a_0 = ev.angle[0]
@@ -205,14 +215,43 @@ for i, hist in enumerate(lista_histo):
         c_0 = traccia.len()
         j_0 = j
     listaTracce.append(traccia)
+    listaTracceEventi.append(listaTracce)
+    
+    tr_tro.append(len(listaTracce))
+    tr_tot.append(ev.len()/5)
     som = 0
     """
-    for tr in listaTracce:
-        som += 1
-        print(f"angolo numero {som}/{len(listaTracce)}")
-        tr.angle_print()
+    if verbose:
+        for tr in listaTracce:
+            som += 1
+            print(f"angolo numero {som}")
+            tr.angle_print()
     """
-    listaTracceEventi.append(listaTracce)
-    print(f"evento numero {i}, tracce trovate {len(listaTracce)} su {ev.len()/5}, efficenza di {(len(listaTracce)/(ev.len()/5)):.2f}")
+    if verbose:
+        print(f"evento numero {i}")
+        print(f"tracce trovate {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
+
+for eint, e in enumerate(listaTracceEventi):
+    c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
+    col = 10
+    row = m.ceil(tr_tot[eint]/col)
+    c3.Divide(col, row)
+    listaGrafici = []
+    for tint, t in enumerate(listaTracce):
+        c3.cd(tint+1)
+        x = np.array([dato.x for dato in t.data])
+        ex = np.array([sig(Xsizes[dato.layind]) for dato in t.data])
+        y = np.array([dato.y for dato in t.data])
+        ey = np.array([sig(Ysizes[dato.layind]) for dato in t.data])
+        g = TGraphErrors(t.len(), x, y, ex, ey)
+        g.SetTitle("Legge di Ohm;Corrente I [A];Tensione V [V]")
+        g.SetMarkerStyle(21)
+        g.SetMarkerColor(4)
+        listaGrafici.append(g)
+        
+    c3.Modified()
+    c3.Update()
+    lista_canvas.append(c3)
     
+#"""    
 gApplication.Run(True)
