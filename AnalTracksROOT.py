@@ -205,7 +205,7 @@ for i, hist in enumerate(lista_histo):
         j = hist.FindBin(angolo)
         c = hist.GetBinContent(j)
         if j != j_0 and ((c + c_0) > 5 or (angolo - a_0) > lar):
-            if (traccia.len()>=3):listaTracce.append(traccia)
+            if (traccia.len()>3):listaTracce.append(traccia)
             indice += 1
             traccia = event(indice)
             traccia.append(ev.data[angint])
@@ -214,7 +214,7 @@ for i, hist in enumerate(lista_histo):
             traccia.append(ev.data[angint])
         c_0 = traccia.len()
         j_0 = j
-    listaTracce.append(traccia)
+    if traccia.len() > 3: listaTracce.append(traccia)
     listaTracceEventi.append(listaTracce)
     
     tr_tro.append(len(listaTracce))
@@ -240,7 +240,7 @@ somma = 0
 for eint, e in enumerate(listaTracceEventi):
     c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
     col = 10
-    row = m.ceil(tr_tot[eint]/col)
+    row = m.ceil(tr_tro[eint]/col)
     c3.Divide(col, row)
     for tint, t in enumerate(e):
         c3.cd(tint+1)
@@ -255,13 +255,13 @@ for eint, e in enumerate(listaTracceEventi):
         xm, xM = min(x), max(x)
         circ = "[0]+sqrt(pow([1], 2) - pow(x - [2], 2))"
         f_circ = TF1(f"f_circ_{tint}", circ, xm, xM)
-        yci  = 0.1
+        yci  = -33.0
         ri   = 33.0
-        xci  = 0.1
+        xci  = 0.0
         
         f_circ.SetParameters(yci, ri, xci)
-        f_circ.SetParLimits(1, 30.0, 40.0)
-        g.Fit(f_circ, "RQ")
+        #f_circ.SetParLimits(1, 30.0, 40.0)
+        g.Fit(f_circ, "RQS")
         g.Draw("AP")
         ycf,  Rf,  xcf  = (f_circ.GetParameter(i) for i in range(3))
         eycf, eRf, exff = (f_circ.GetParError(i)  for i in range(3))
