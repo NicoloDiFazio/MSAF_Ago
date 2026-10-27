@@ -110,7 +110,7 @@ mu_i    = 0.5
 sigma_i = h_test.GetRMS()
 
 fit_test.SetParameters(A_i, mu_i, sigma_i)
-h_test.Fit("fit_test")
+h_test.Fit("fit_test", "R")
 
 A_f,  mu_f,  sigma_f  = (fit_test.GetParameter(i) for i in range(3))
 eA_f, emu_f, esigma_f = (fit_test.GetParError(i)  for i in range(3))
@@ -231,27 +231,40 @@ for i, hist in enumerate(lista_histo):
         print(f"evento numero {i}")
         print(f"tracce trovate {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
 
+listaGrafici = []
 for eint, e in enumerate(listaTracceEventi):
-    c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
-    col = 10
-    row = m.ceil(tr_tot[eint]/col)
-    c3.Divide(col, row)
-    listaGrafici = []
-    for tint, t in enumerate(listaTracce):
-        c3.cd(tint+1)
-        x = np.array([dato.x for dato in t.data])
-        ex = np.array([sig(Xsizes[dato.layind]) for dato in t.data])
-        y = np.array([dato.y for dato in t.data])
-        ey = np.array([sig(Ysizes[dato.layind]) for dato in t.data])
-        g = TGraphErrors(t.len(), x, y, ex, ey)
-        g.SetTitle("Fit circolare del raggio di curvatura")
-        g.SetMarkerStyle(21)
-        g.SetMarkerColor(4)
-        listaGrafici.append(g)
-        
-    c3.Modified()
-    c3.Update()
-    lista_canvas.append(c3)
+    if eint == 0:
+        c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
+        col = 10
+        row = m.ceil(tr_tot[eint]/col)
+        c3.Divide(col, row)
+        for tint, t in enumerate(e):
+            c3.cd(tint+1)
+            x = np.array([dato.x for dato in t.data])
+            ex = np.array([sig(Xsizes[dato.layind]) for dato in t.data])
+            y = np.array([dato.y for dato in t.data])
+            ey = np.array([sig(Ysizes[dato.layind]) for dato in t.data])
+            g = TGraphErrors(t.len(), x, y, ex, ey)
+            g.SetTitle(f"Fit circolare del raggio di curvatura della traccia {tint}")
+            listaGrafici.append(g)
+            
+            xm, xM = min(x), max(x)
+            #circ = "[0]+TMath::Sign(1.0, [1])*sqrt(pow([2], 2) - pow(x - [3], 2))"
+            circ = "[0]+sqrt(pow([1], 2) - pow(x - [2], 2))"
+            f_circ = TF1(f"f_circ_{tint}", circ, xm, xM)
+            yci  = 0.1
+            #sign = 1
+            ri   = 33
+            xci  = 0.1
+
+            f_circ.SetParameters(yci, ri, xci)
+            f_circ.SetParLimits(1, 25.0, 40.0)
+            g.Fit(f"f_circ_{tint}", "R")
+            g.Draw("AP")
+
+        c3.Modified()
+        c3.Update()
+        lista_canvas.append(c3)
     
 #"""    
 gApplication.Run(True)
