@@ -232,6 +232,8 @@ for i, hist in enumerate(lista_histo):
         print(f"tracce trovate {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
 
 listaGrafici = []
+Rs = []
+eRs = []
 for eint, e in enumerate(listaTracceEventi):
     if eint == 0:
         c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
@@ -254,17 +256,31 @@ for eint, e in enumerate(listaTracceEventi):
             f_circ = TF1(f"f_circ_{tint}", circ, xm, xM)
             yci  = 0.1
             #sign = 1
-            ri   = 33
+            ri   = 33.0
             xci  = 0.1
 
             f_circ.SetParameters(yci, ri, xci)
-            f_circ.SetParLimits(1, 25.0, 40.0)
+            f_circ.SetParLimits(1, 30.0, 40.0)
             g.Fit(f"f_circ_{tint}", "R")
             g.Draw("AP")
+            ycf,  Rf,  xcf  = (f_circ.GetParameter(i) for i in range(3))
+            eycf, eRf, exff = (f_circ.GetParError(i)  for i in range(3))
+            Rs.append(Rf)
+            eRs.append(eRf)
+            chi2, ndf, p_value = f_circ.GetChisquare(), f_circ.GetNDF(), f_circ.GetProb()
+
+            if True:
+                print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
+                print(f"mu = {mu_f:.2e} +/- {emu_f:.2e} rad")
+                print(f"sigma = {sigma_f:.2e} +/- {esigma_f:.2e} rad")
+            
 
         c3.Modified()
         c3.Update()
         lista_canvas.append(c3)
-    
+
+for rind, r in enumerate(Rs):
+    print(f" R = {r} +- {eRs[rind]}")
+
 #"""    
 gApplication.Run(True)
