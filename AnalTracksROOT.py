@@ -244,7 +244,7 @@ for eint, e in enumerate(listaTracceEventi):
         y = np.array([dato.y for dato in t.data])
         ey = np.array([sig(Ysizes[dato.layind]) for dato in t.data])
         g = TGraphErrors(t.len(), x, y, ex, ey)
-        g.SetTitle("Legge di Ohm;Corrente I [A];Tensione V [V]")
+        g.SetTitle("Fit circolare del raggio di curvatura")
         g.SetMarkerStyle(21)
         g.SetMarkerColor(4)
         listaGrafici.append(g)
