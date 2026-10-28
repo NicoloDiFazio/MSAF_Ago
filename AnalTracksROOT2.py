@@ -66,6 +66,8 @@ Xsizes = [300 * um] * 5
 Ysizes = [50 * um, 50 * um, 200 * um, 200 * um, 200 * um]
 Zsizes = [100 * um] * 5
 
+pts_reali = [0.5, 1, 1.5, 2, 5, 10, 15]
+
 #errori sulle x, y e z
 def sig(coord):
     return coord/m.sqrt(12)
@@ -92,7 +94,7 @@ sigma_f = np.std(ass)
 #              ANALISI EFFETTIVA                #
 #################################################
 
-f = open('dati.txt', 'r')
+f = open('dati2.txt', 'r')
 l_evento = 0
 evs = []
 ev = event(l_evento)     #eventi con rho, theta lungo piano trasverso
@@ -111,10 +113,11 @@ for line in f:
 
 evs.append(ev)
 f.close()
+
 if graphics: 
     c1 = TCanvas("c1", "Distribuzione Angolare dei Dati divisi per evento", 800, 600)
     col = 5
-    row = 2
+    row = m.ceil(len(evs)/col)
     c1.Divide(col, row)
 
 lista_histo = []
@@ -139,7 +142,7 @@ if graphics:
     c1.Modified()
     c1.Update()
 
-lar = sigma_f*16
+lar = sigma_f*10
 listaTracceEventi = []
 tr_tro = []
 tr_tot = []
@@ -148,7 +151,6 @@ lista_canvas = []
 
 risposta = input("vuoi visualizzare i grafici specifici? (y/n o t/f) ").strip().lower()
 allgraph = risposta in ["y", "t"]
-
 
 for i, hist in enumerate(lista_histo):
     if allgraph:
@@ -187,23 +189,31 @@ for i, hist in enumerate(lista_histo):
     somma_tot += ev.len()/5
     
     som = 0
+    
     if verbose:
         for tr in listaTracce:
             som += 1
             print(f"angolo numero {som}")
             tr.angle_print()
-    
-    if verbose:
+    if True:
         print(f"evento numero {i}")
         print(f"tracce trovate {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
 
 listaGrafici = []
-Rs = []
-eRs = []
-ps = []
+Rss = []
+eRss = []
+pTs = []
+epTs = []
 somma = 0
 count = 0
+Ris = []
+for pt_re in pts_reali:
+    Ris.append(10/3*pt_re/B)
+    
 for eint, e in enumerate(listaTracceEventi):
+    Rs = []
+    eRs = []
+    ps = []
     if graphics: 
         c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
         col = 10
@@ -223,60 +233,62 @@ for eint, e in enumerate(listaTracceEventi):
         xm, xM = min(x), max(x)
         circ = "[0]+sqrt(pow([1], 2) - pow(x - [2], 2))"
         f_circ = TF1(f"f_circ_{tint}", circ, xm, xM)
-        yci  = -33.0
-        ri   = 33.0
+        ri   = Ris[eint]
+        yci  = -ri
         xci  = 0.0
         
         f_circ.SetParameters(yci, ri, xci)
-        #f_circ.SetParLimits(1, 30.0, 40.0)
         g.Fit(f_circ, "RQS")
         if graphics: g.Draw("AP")
         ycf,  Rf,  xcf  = (f_circ.GetParameter(i) for i in range(3))
         eycf, eRf, exff = (f_circ.GetParError(i)  for i in range(3))
         chi2, ndf, p_value = f_circ.GetChisquare(), f_circ.GetNDF(), f_circ.GetProb()
+
+        pT = 0.3*Rf*B
+        epT = pT*eRf/Rf
         
-        if p_value >= 0.05:
+        if p_value >= 0.05 and len(np.unique(indici_di_traccia)) == 1:
             Rs.append(Rf)
             eRs.append(eRf)
-            ps.append(p_value)
-            if len(np.unique(indici_di_traccia)) == 1:
-                count += 1
+            pTs.append(pT)
+            epTs.append(epT)
         
         if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
     somma += len(e)
-
+    Rss.append(Rs)
+    eRss.append(eRs)
     if graphics: 
         c3.Modified()
         c3.Update()
         lista_canvas.append(c3)
 
-pTs = np.array([])
-epTs = np.array([])
-scorre = np.array([])
+graphics=True
 
-for rind, r in enumerate(Rs):
-    pT = 0.3*B*r
-    epT = pT*eRs[rind]/r
-    pTs = np.append(pTs, pT)
-    epTs = np.append(epTs, epT)
-    scorre = np.append(scorre, float(rind+1))
-    if verbose:
-        print(f"Raggio R = {r} +- {eRs[rind]} m")
-        print(f"Impulso pT = {pT} +- {epT} GeV/c")
-        print(f"p_value = {ps[rind]}")
+if graphics: 
+    c4 = TCanvas(f"c4", "Confronto impulsi reali/calcolati", 800, 600)
 
-esc = np.zeros(len(scorre))
-c4 = TCanvas("c4", "pTs", 800, 600)
-gr = TGraphErrors(len(pTs), scorre, pTs, esc, epTs)
-gr.SetTitle("Grafico pTs")
-gr.SetMarkerSize(10)
-gr.Draw("AP")
-c4.Modified()
-c4.Update()
-        
-print(f"Ho trovato {len(Rs)} impulsi su {somma} su un totale di {somma_tot}")
-print(f"Ho trovato {count} tracce della stessa traccia")
+pTm, pTM = min(pTs), max(pTs)
+nb = len(pts_reali)*10
+
+h_calc = TH1D(f"h_calc", f"Impulsi calcolati; pT; Conteggi", nb, pTm-1, pTM+1)
+for pT in pTs: h_calc.Fill(pT)
+
+#fit = TF1(f"fit", "[0]*TMath::Log(x)/TMath::Log([1]) + [2]", pTm, pTM)
+fit = TF1(f"fit", "[0]*pow(x, [1]) + [2]", 0, pTM)
+fit.SetParameters(1, 0.005, -10)
+h_calc.Fit(fit, "R")
+
+if graphics:
+    h_calc.SetFillColor(38) # Arancione
+    h_calc.SetLineColor(4) # Rosso
+    h_calc.SetLineWidth(2)
+    h_calc.Draw("HIST")
+    fit.Draw("SAME")
+
+if graphics: 
+    c4.Modified()
+    c4.Update()
+
 #"""    
 if graphics or allgraph: gApplication.Run(True)
-gApplication.Run(True)

@@ -3,6 +3,12 @@ import matplotlib.pyplot as plt
 import ROOT
 import math as m
 
+#Geometria e parametri
+
+Xlayer = [0.1, 0.2, 0.4, 0.6, 0.8]
+pts = [0.5, 1, 1.5, 2, 5, 10, 15] #inizio da 1 se no hit non hittano
+
+mPi = 0.1396  # Massa del pione carico (GeV)
 B = 1.0
 
 um = 1e-6
@@ -49,9 +55,7 @@ def intersec(pos, trk, charge, l_i):
     xc = pos.X()-R*m.cos(phi0)
     yc = pos.Y()-R*m.sin(phi0)
     
-    ang  = (xl_center-pos.X())/R+m.cos(phi0)
-    #print(ang)
-    ang = m.acos(ang)
+    ang  = m.acos((xl_center-pos.X())/R+m.cos(phi0))
     if phi0<0:
         ang  = -ang
 
@@ -76,13 +80,6 @@ def intersec(pos, trk, charge, l_i):
     return x,y,z
 
 ###### Generazione e disegno degli "hit" ######
-
-#Geometria
-#Xlayer = [0.05, 0.1, 0.15, 0.25, 0.35, 0.45]
-Xlayer = [0.1, 0.2, 0.4, 0.6, 0.8]
-pts = [0.1, 1, 5, 7.5, 10]
-
-mPi = 0.1396  # Massa del pione carico (GeV)
 rnd = ROOT.TRandom3()
 rnd.SetSeed(1234567)
 
@@ -113,7 +110,8 @@ f = open('dati2.txt', 'w')
 #MC per eventi
 for jevt, pt in enumerate(pts): #n eventi
     f.write(str(jevt) + '\n')
-    ntrack  = int(rnd.Gaus(100,20))
+    #ntrack  = int(rnd.Gaus(100,20))
+    ntrack = 1000
     for j in range(0,ntrack): #n tracce
 
         trk   = ROOT.TLorentzVector()
