@@ -109,7 +109,7 @@ for j in range(0, ntracce):
 
 ft.close()
 
-f = open('dati.txt', 'w')
+f = open('dati2.txt', 'w')
 #MC per eventi
 for jevt, pt in enumerate(pts): #n eventi
     f.write(str(jevt) + '\n')
