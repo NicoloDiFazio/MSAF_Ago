@@ -273,18 +273,18 @@ nb = len(pts_reali)*10
 
 h_calc = TH1D(f"h_calc", f"Impulsi calcolati; pT; Conteggi", nb, pTm-1, pTM+1)
 for pT in pTs: h_calc.Fill(pT)
-
+"""
 #fit = TF1(f"fit", "[0]*TMath::Log(x)/TMath::Log([1]) + [2]", pTm, pTM)
-fit = TF1(f"fit", "[0]*pow(x, [1]) + [2]", 0, pTM)
-fit.SetParameters(1, 0.005, -10)
+fit = TF1(f"fit", "[0]+[1]*atan([2]*x)", 0, pTM)
+fit.SetParameters(0, 1, 10)
 h_calc.Fit(fit, "R")
-
+"""
 if graphics:
     h_calc.SetFillColor(38) # Arancione
     h_calc.SetLineColor(4) # Rosso
     h_calc.SetLineWidth(2)
     h_calc.Draw("HIST")
-    fit.Draw("SAME")
+    #fit.Draw("SAME")
 
 if graphics: 
     c4.Modified()
