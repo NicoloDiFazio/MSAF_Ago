@@ -79,16 +79,28 @@ risposta = input("output grafico? (y/n o t/f) ").strip().lower()
 graphics = risposta in ["y", "t"]
 
 f = open('test.txt', 'r')
-evento_test = event(0)
+l_evtest = 0
+evstest = []
+evento_test = event(l_evtest)
+
 for line in f:
     lec = line.split()
-    h = hit(float(lec[0]), float(lec[1]), float(lec[2]),
-            int(lec[3]), int(lec[4]))
-    evento_test.append(h)
+    if len(lec) == 1:
+        if (int(lec[0]) != l_evtest):
+            l_evtest = int(lec[0])
+            evstest.append(evento_test)
+            evento_test = event(l_evtest)
+    elif len(lec) == 5:
+        h = hit(float(lec[0]), float(lec[1]), float(lec[2]),
+                int(lec[3]), int(lec[4]))
+        evento_test.append(h)
+evstest.append(evento_test)
 f.close()
 
-ass = np.array([a for a in evento_test.angle])
-sigma_f = np.std(ass)
+sigmas_f = []
+for evtest in evstest:
+    ass = np.array([a for a in evtest.angle])
+    sigmas_f.append(np.std(ass))
 
 #################################################
 #              ANALISI EFFETTIVA                #
@@ -110,7 +122,6 @@ for line in f:
         the_hit = hit(float(lettura[0]), float(lettura[1]), float(lettura[2]),
                       int(lettura[3]), int(lettura[4]))
         ev.append(the_hit)
-
 evs.append(ev)
 f.close()
 
@@ -137,14 +148,12 @@ for i, ev in enumerate(evs):
         h.Draw("HIST")
         
     lista_histo.append(h)
-    if verbose: print(f"Larghezza bin = {h.GetXaxis().GetBinWidth(0)/(sigma_f)}sigma")
+    if verbose: print(f"Larghezza bin = {h.GetXaxis().GetBinWidth(0)/(sigmas_f[i])}sigma")
 if graphics: 
     c1.Modified()
     c1.Update()
 
-lar = sigma_f*10
 listaTracceEventi = []
-tr_tro = []
 tr_tot = []
 somma_tot = 0
 lista_canvas = []
@@ -160,6 +169,7 @@ for i, hist in enumerate(lista_histo):
         c2.Update()
         lista_canvas.append(c2)
     listaTracce = []
+    lar = sigmas_f[i]*10
     ev = evs[i].sync_sort()
     a_0 = ev.angle[0]
     j_0 = hist.FindBin(a_0)
@@ -184,7 +194,6 @@ for i, hist in enumerate(lista_histo):
     if traccia.len() > 3: listaTracce.append(traccia)
     listaTracceEventi.append(listaTracce)
     
-    tr_tro.append(len(listaTracce))
     tr_tot.append(ev.len()/5)
     somma_tot += ev.len()/5
     
@@ -195,10 +204,7 @@ for i, hist in enumerate(lista_histo):
             som += 1
             print(f"angolo numero {som}")
             tr.angle_print()
-    if True:
-        print(f"evento numero {i}")
-        print(f"tracce trovate {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
-
+            
 listaGrafici = []
 Rss = []
 eRss = []
@@ -255,6 +261,11 @@ for eint, e in enumerate(listaTracceEventi):
         
         if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
+            
+    if True:
+        print(f"evento numero {eint}")
+        print(f"tracce trovate {len(Rs)}/{tr_tot[eint]}={(len(Rs)/tr_tot[eint]):.2f}")
+
     somma += len(e)
     Rss.append(Rs)
     eRss.append(eRs)

@@ -84,25 +84,26 @@ rnd = ROOT.TRandom3()
 rnd.SetSeed(1234567)
 
 ft = open('test.txt', 'w')
-ntracce = 1000
-for j in range(0, ntracce):
-    traccia = ROOT.TLorentzVector()
+for jevt, pt in enumerate(pts): #n eventi
+    ft.write(str(jevt) + '\n')
+    ntracce = 1000
+    for j in range(0, ntracce):
+        traccia = ROOT.TLorentzVector()
 
-    pt    = 10
-    phi   = (rnd.Rndm()*2-1)*0.1
-    theta = 0.5
+        phi   = (rnd.Rndm()*2-1)*0.1
+        theta = 0.5
 
-    vec = ROOT.TVector3()
-    vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)
-    traccia.SetVectM(vec, mPi)
+        vec = ROOT.TVector3()
+        vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)
+        traccia.SetVectM(vec, mPi)
 
-    carica = 1
+        carica = 1
 
-    posizione = ROOT.TVector3(0, 0, 0)
-    for i in range(0, len(Xlayer)):
-        colpis = intersec(posizione, traccia, carica, i)
-        the_hit = hit(*colpis, j, i)
-        ft.write(the_hit.tostr() + '\n')
+        posizione = ROOT.TVector3(0, 0, 0)
+        for i in range(0, len(Xlayer)):
+            colpis = intersec(posizione, traccia, carica, i)
+            the_hit = hit(*colpis, j, i)
+            ft.write(the_hit.tostr() + '\n')
 
 ft.close()
 
@@ -112,7 +113,7 @@ for jevt, pt in enumerate(pts): #n eventi
     f.write(str(jevt) + '\n')
     #ntrack  = int(rnd.Gaus(100,20))
     ntrack = 1000
-    for j in range(0,ntrack): #n tracce
+    for j in range(0, ntrack): #n tracce
 
         trk   = ROOT.TLorentzVector()
         costh = rnd.Rndm()*2.0-1.0
