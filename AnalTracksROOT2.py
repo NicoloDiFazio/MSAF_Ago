@@ -102,6 +102,7 @@ for evtest in evstest:
     ass = np.array([a for a in evtest.angle])
     sigmas_f.append(np.std(ass))
 
+for s in sigmas_f: print(s)
 #################################################
 #              ANALISI EFFETTIVA                #
 #################################################
@@ -122,6 +123,7 @@ for line in f:
         the_hit = hit(float(lettura[0]), float(lettura[1]), float(lettura[2]),
                       int(lettura[3]), int(lettura[4]))
         ev.append(the_hit)
+
 evs.append(ev)
 f.close()
 
@@ -133,11 +135,10 @@ if graphics:
 
 lista_histo = []
 for i, ev in enumerate(evs):
+    sigma_f = sigmas_f[-2]
     if graphics: c1.cd(i+1)
     thm, thM = min(ev.angle), max(ev.angle)
-    #nb = int((thM - thm)/(sigma_f*4))
-    nb = 1000000
-    #print(nb)
+    nb = 100000
     h = TH1D(f"h_{i}", f"Evento {i}; Theta; Conteggi", nb, thm, thM)
     for ang in ev.angle: h.Fill(ang)
 
@@ -148,12 +149,17 @@ for i, ev in enumerate(evs):
         h.Draw("HIST")
         
     lista_histo.append(h)
-    if verbose: print(f"Larghezza bin = {h.GetXaxis().GetBinWidth(0)/(sigmas_f[i])}sigma")
+    if verbose: print(f"Larghezza bin = {h.GetXaxis().GetBinWidth(0)/(sigma_f)}sigma")
 if graphics: 
     c1.Modified()
     c1.Update()
 
+#################################################
+#              RICERCA VICINANZA                #
+#################################################
+
 listaTracceEventi = []
+tr_tro = []
 tr_tot = []
 somma_tot = 0
 lista_canvas = []
@@ -162,6 +168,8 @@ risposta = input("vuoi visualizzare i grafici specifici? (y/n o t/f) ").strip().
 allgraph = risposta in ["y", "t"]
 
 for i, hist in enumerate(lista_histo):
+    sigma_f = sigmas_f[-2]
+    lar = sigma_f*10
     if allgraph:
         c2 = TCanvas(f"c2_{i}", f"Distribuzione Angolare dei Dati dell' evento {i}", 800, 600)
         hist.Draw("HIST")
@@ -169,7 +177,6 @@ for i, hist in enumerate(lista_histo):
         c2.Update()
         lista_canvas.append(c2)
     listaTracce = []
-    lar = sigmas_f[i]*10
     ev = evs[i].sync_sort()
     a_0 = ev.angle[0]
     j_0 = hist.FindBin(a_0)
@@ -182,7 +189,7 @@ for i, hist in enumerate(lista_histo):
         j = hist.FindBin(angolo)
         c = hist.GetBinContent(j)
         if j != j_0 and ((c + c_0) > 5 or (angolo - a_0) > lar):
-            if (traccia.len()>3):listaTracce.append(traccia)
+            if (traccia.len()>3): listaTracce.append(traccia)
             indice += 1
             traccia = event(indice)
             traccia.append(ev.data[angint])
@@ -194,6 +201,7 @@ for i, hist in enumerate(lista_histo):
     if traccia.len() > 3: listaTracce.append(traccia)
     listaTracceEventi.append(listaTracce)
     
+    tr_tro.append(len(listaTracce))
     tr_tot.append(ev.len()/5)
     somma_tot += ev.len()/5
     
@@ -204,7 +212,10 @@ for i, hist in enumerate(lista_histo):
             som += 1
             print(f"angolo numero {som}")
             tr.angle_print()
-            
+    if True:
+        print(f"evento numero {i}")
+        print(f"tracce ricostruite {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
+
 listaGrafici = []
 Rss = []
 eRss = []
@@ -215,12 +226,16 @@ count = 0
 Ris = []
 for pt_re in pts_reali:
     Ris.append(10/3*pt_re/B)
-    
+
+
+risposta = input("vuoi visualizzare i fit specifici? (y/n o t/f) ").strip().lower()
+allgraph = risposta in ["y", "t"]
+
 for eint, e in enumerate(listaTracceEventi):
     Rs = []
     eRs = []
     ps = []
-    if graphics: 
+    if allgraph: 
         c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
         col = 10
         row = m.ceil(tr_tro[eint]/col)
@@ -245,7 +260,7 @@ for eint, e in enumerate(listaTracceEventi):
         
         f_circ.SetParameters(yci, ri, xci)
         g.Fit(f_circ, "RQS")
-        if graphics: g.Draw("AP")
+        if allgraph: g.Draw("AP")
         ycf,  Rf,  xcf  = (f_circ.GetParameter(i) for i in range(3))
         eycf, eRf, exff = (f_circ.GetParError(i)  for i in range(3))
         chi2, ndf, p_value = f_circ.GetChisquare(), f_circ.GetNDF(), f_circ.GetProb()
@@ -261,10 +276,9 @@ for eint, e in enumerate(listaTracceEventi):
         
         if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
-            
     if True:
         print(f"evento numero {eint}")
-        print(f"tracce trovate {len(Rs)}/{tr_tot[eint]}={(len(Rs)/tr_tot[eint]):.2f}")
+        print(f"tracce trovate {len(Rs)}/{tr_tot[i]}={(len(Rs)/tr_tot[i]):.2f}")
 
     somma += len(e)
     Rss.append(Rs)

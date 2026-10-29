@@ -104,7 +104,6 @@ for jevt, pt in enumerate(pts): #n eventi
             colpis = intersec(posizione, traccia, carica, i)
             the_hit = hit(*colpis, j, i)
             ft.write(the_hit.tostr() + '\n')
-
 ft.close()
 
 f = open('dati2.txt', 'w')
@@ -112,7 +111,7 @@ f = open('dati2.txt', 'w')
 for jevt, pt in enumerate(pts): #n eventi
     f.write(str(jevt) + '\n')
     #ntrack  = int(rnd.Gaus(100,20))
-    ntrack = 1000
+    ntrack = 100
     for j in range(0, ntrack): #n tracce
 
         trk   = ROOT.TLorentzVector()
