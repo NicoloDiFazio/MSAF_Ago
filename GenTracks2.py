@@ -6,7 +6,7 @@ import math as m
 #Geometria e parametri
 
 Xlayer = [0.1, 0.2, 0.4, 0.6, 0.8]
-pts = [0.5, 1, 1.5, 2, 5, 10, 15] #inizio da 1 se no hit non hittano
+pts = [0.5, 1, 1.5, 2, 5, 10] #inizio da 1 se no hit non hittano
 
 mPi = 0.1396  # Massa del pione carico (GeV)
 B = 1.0
@@ -84,26 +84,27 @@ rnd = ROOT.TRandom3()
 rnd.SetSeed(1234567)
 
 ft = open('test.txt', 'w')
-for jevt, pt in enumerate(pts): #n eventi
-    ft.write(str(jevt) + '\n')
-    ntracce = 1000
-    for j in range(0, ntracce):
-        traccia = ROOT.TLorentzVector()
+#for jevt, pt in enumerate(pts): #n eventi
+#ft.write(str(jevt) + '\n')
+ntracce = 1000
+for j in range(0, ntracce):
+    traccia = ROOT.TLorentzVector()
+    
+    phi   = (rnd.Rndm()*2-1)*0.1
+    theta = 0.5
+    pt = rnd.Rndm()*(max(pts)-min(pts)) + min(pts)
 
-        phi   = (rnd.Rndm()*2-1)*0.1
-        theta = 0.5
+    vec = ROOT.TVector3()
+    vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)
+    traccia.SetVectM(vec, mPi)
 
-        vec = ROOT.TVector3()
-        vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)
-        traccia.SetVectM(vec, mPi)
+    carica = 1
 
-        carica = 1
-
-        posizione = ROOT.TVector3(0, 0, 0)
-        for i in range(0, len(Xlayer)):
-            colpis = intersec(posizione, traccia, carica, i)
-            the_hit = hit(*colpis, j, i)
-            ft.write(the_hit.tostr() + '\n')
+    posizione = ROOT.TVector3(0, 0, 0)
+    for i in range(0, len(Xlayer)):
+        colpis = intersec(posizione, traccia, carica, i)
+        the_hit = hit(*colpis, j, i)
+        ft.write(the_hit.tostr() + '\n')
 ft.close()
 
 f = open('dati2.txt', 'w')

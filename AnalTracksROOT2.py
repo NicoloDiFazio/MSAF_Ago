@@ -66,7 +66,7 @@ Xsizes = [300 * um] * 5
 Ysizes = [50 * um, 50 * um, 200 * um, 200 * um, 200 * um]
 Zsizes = [100 * um] * 5
 
-pts_reali = [0.5, 1, 1.5, 2, 5, 10, 15]
+pts_reali = [0.5, 1, 1.5, 2, 5, 10]
 
 #errori sulle x, y e z
 def sig(coord):
@@ -135,7 +135,7 @@ if graphics:
 
 lista_histo = []
 for i, ev in enumerate(evs):
-    sigma_f = sigmas_f[-2]
+    sigma_f = sigmas_f[-1]
     if graphics: c1.cd(i+1)
     thm, thM = min(ev.angle), max(ev.angle)
     nb = 100000
@@ -168,8 +168,8 @@ risposta = input("vuoi visualizzare i grafici specifici? (y/n o t/f) ").strip().
 allgraph = risposta in ["y", "t"]
 
 for i, hist in enumerate(lista_histo):
-    sigma_f = sigmas_f[-2]
-    lar = sigma_f*10
+    sigma_f = sigmas_f[-1]
+    lar = sigma_f*3
     if allgraph:
         c2 = TCanvas(f"c2_{i}", f"Distribuzione Angolare dei Dati dell' evento {i}", 800, 600)
         hist.Draw("HIST")
@@ -188,7 +188,7 @@ for i, hist in enumerate(lista_histo):
     for angint, angolo in enumerate(ev.angle):
         j = hist.FindBin(angolo)
         c = hist.GetBinContent(j)
-        if j != j_0 and ((c + c_0) > 5 or (angolo - a_0) > lar):
+        if j != j_0 and ((c + traccia.len()) > 5 or (angolo - a_0) > lar):
             if (traccia.len()>3): listaTracce.append(traccia)
             indice += 1
             traccia = event(indice)
@@ -196,7 +196,6 @@ for i, hist in enumerate(lista_histo):
             a_0 = angolo
         else:
             traccia.append(ev.data[angint])
-        c_0 = traccia.len()
         j_0 = j
     if traccia.len() > 3: listaTracce.append(traccia)
     listaTracceEventi.append(listaTracce)
@@ -294,7 +293,7 @@ if graphics:
     c4 = TCanvas(f"c4", "Confronto impulsi reali/calcolati", 800, 600)
 
 pTm, pTM = min(pTs), max(pTs)
-nb = len(pts_reali)*10
+nb = len(pts_reali)*8
 
 h_calc = TH1D(f"h_calc", f"Impulsi calcolati; pT; Conteggi", nb, pTm-1, pTM+1)
 for pT in pTs: h_calc.Fill(pT)
