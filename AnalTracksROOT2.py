@@ -128,7 +128,7 @@ evs.append(ev)
 f.close()
 
 if graphics: 
-    c1 = TCanvas("c1", "Distribuzione Angolare dei Dati divisi per evento", 800, 600)
+    c1 = TCanvas("c1", "Distribuzione Angolare dei Dati divisi per impulso", 800, 600)
     col = 5
     row = m.ceil(len(evs)/col)
     c1.Divide(col, row)
@@ -139,7 +139,7 @@ for i, ev in enumerate(evs):
     if graphics: c1.cd(i+1)
     thm, thM = min(ev.angle), max(ev.angle)
     nb = 100000
-    h = TH1D(f"h_{i}", f"Evento {i}; Theta; Conteggi", nb, thm, thM)
+    h = TH1D(f"h_{i}", f"Impulso {pts_reali[i]}; Theta; Conteggi", nb, thm, thM)
     for ang in ev.angle: h.Fill(ang)
 
     if graphics: 
@@ -171,7 +171,7 @@ for i, hist in enumerate(lista_histo):
     sigma_f = sigmas_f[-1]
     lar = sigma_f*3
     if allgraph:
-        c2 = TCanvas(f"c2_{i}", f"Distribuzione Angolare dei Dati dell' evento {i}", 800, 600)
+        c2 = TCanvas(f"c2_{i}", f"Distribuzione Angolare dei Dati con Impulso {pts_reali[i]}", 800, 600)
         hist.Draw("HIST")
         c2.Modified()
         c2.Update()
@@ -281,7 +281,7 @@ for eint, e in enumerate(listaTracceEventi):
         if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
     if True:
-        print(f"evento numero {eint}")
+        print(f"Impulso {pts_reali[i]}")
         print(f"tracce trovate {len(Rs)}/{tr_tot[eint]}={(len(Rs)/tr_tot[eint]):.2f}")
 
     somma += len(e)
@@ -302,20 +302,19 @@ if graphics:
 gr = TGraphErrors()
 for pint, pTs in enumerate(pTss):
     epTs = epTss[pint]
-    w = 1/(epTs**2)
-    pTm = np.sum(w * pTs)/np.sum(w)
-    epTm = 1/np.sqrt(np.sum(w))
+    pTm = np.mean(pTs)
+    epTm = np.std(pTs)/np.sqrt(len(pTs))
     y = len(pTs)/tr_tot[pint]
     
     gr.SetPoint(pint, pTm, y)
-    gr.SetPointError(pint, epTm, 0)
+    gr.SetPointError(pint, epTm, 0.00001)
 
 fit = TF1("fit", "[0] * 0.5 * (1 + TMath::Erf((x - [1]) / (TMath::Sqrt(2) * [2])))", 0, 10)
 fit.SetParameters(0.95, 0.8, 0.2) #ampiezza max, punto di flesso, larghezza
 gr.Fit(fit, "R")
 
 if graphics:
-    gr.SetTitle("Grafico efficienza in funzione dell'impulso; Impulsi pT; Efficenza")
+    gr.SetTitle("Grafico efficienza in funzione dell'impulso; Impulsi pT; Efficienza")
     gr.SetMarkerSize(5)
     gr.SetLineWidth(5)
     gr.Draw("AP")
