@@ -215,6 +215,10 @@ for i, hist in enumerate(lista_histo):
         print(f"evento numero {i}")
         print(f"tracce ricostruite {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
 
+#################################################
+#                 FIT CIRCOLARE                 #
+#################################################
+        
 listaGrafici = []
 Rss = []
 eRss = []
@@ -225,7 +229,6 @@ count = 0
 Ris = []
 for pt_re in pts_reali:
     Ris.append(10/3*pt_re/B)
-
 
 risposta = input("vuoi visualizzare i fit specifici? (y/n o t/f) ").strip().lower()
 allgraph = risposta in ["y", "t"]
@@ -279,7 +282,7 @@ for eint, e in enumerate(listaTracceEventi):
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
     if True:
         print(f"evento numero {eint}")
-        print(f"tracce trovate {len(Rs)}/{tr_tot[i]}={(len(Rs)/tr_tot[eint]):.2f}")
+        print(f"tracce trovate {len(Rs)}/{tr_tot[eint]}={(len(Rs)/tr_tot[eint]):.2f}")
 
     somma += len(e)
     Rss.append(Rs)
