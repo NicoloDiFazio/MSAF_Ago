@@ -240,7 +240,7 @@ for eint, e in enumerate(listaTracceEventi):
         row = m.ceil(tr_tro[eint]/col)
         c3.Divide(col, row)
     for tint, t in enumerate(e):
-        if graphics: c3.cd(tint+1)
+        if allgraph: c3.cd(tint+1)
         indici_di_traccia = np.array([dato.trkind for dato in t.data])
         x = np.array([dato.x for dato in t.data])
         ex = np.array([sig(Xsizes[dato.layind]) for dato in t.data])
