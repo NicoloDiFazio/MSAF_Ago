@@ -66,7 +66,7 @@ Xsizes = [300 * um] * 5
 Ysizes = [50 * um, 50 * um, 200 * um, 200 * um, 200 * um]
 Zsizes = [100 * um] * 5
 
-pts_reali = [0.5, 1, 1.5, 2, 5, 10]
+pts_reali = [0.5, 1, 1.5, 2, 3, 5, 7, 10]
 
 #errori sulle x, y e z
 def sig(coord):
@@ -102,7 +102,7 @@ for evtest in evstest:
     ass = np.array([a for a in evtest.angle])
     sigmas_f.append(np.std(ass))
 
-for s in sigmas_f: print(s)
+#for s in sigmas_f: print(s)
 #################################################
 #              ANALISI EFFETTIVA                #
 #################################################
@@ -218,8 +218,8 @@ for i, hist in enumerate(lista_histo):
 listaGrafici = []
 Rss = []
 eRss = []
-pTs = []
-epTs = []
+pTss = []
+epTss = []
 somma = 0
 count = 0
 Ris = []
@@ -233,6 +233,8 @@ allgraph = risposta in ["y", "t"]
 for eint, e in enumerate(listaTracceEventi):
     Rs = []
     eRs = []
+    pTs = np.array([])
+    epTs = np.array([])
     ps = []
     if allgraph: 
         c3 = TCanvas(f"c_{eint}", "Fit circolare sulle tracce", 800, 600)
@@ -270,18 +272,20 @@ for eint, e in enumerate(listaTracceEventi):
         if p_value >= 0.05 and len(np.unique(indici_di_traccia)) == 1:
             Rs.append(Rf)
             eRs.append(eRf)
-            pTs.append(pT)
-            epTs.append(epT)
+            pTs = np.append(pTs, pT)
+            epTs = np.append(epTs, epT)
         
         if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
     if True:
         print(f"evento numero {eint}")
-        print(f"tracce trovate {len(Rs)}/{tr_tot[i]}={(len(Rs)/tr_tot[i]):.2f}")
+        print(f"tracce trovate {len(Rs)}/{tr_tot[i]}={(len(Rs)/tr_tot[eint]):.2f}")
 
     somma += len(e)
     Rss.append(Rs)
     eRss.append(eRs)
+    pTss.append(pTs)
+    epTss.append(epTs)
     if graphics: 
         c3.Modified()
         c3.Update()
@@ -292,23 +296,27 @@ graphics=True
 if graphics: 
     c4 = TCanvas(f"c4", "Confronto impulsi reali/calcolati", 800, 600)
 
-pTm, pTM = min(pTs), max(pTs)
-nb = len(pts_reali)*8
+gr = TGraphErrors()
+for pint, pTs in enumerate(pTss):
+    epTs = epTss[pint]
+    w = 1/(epTs**2)
+    pTm = np.sum(w * pTs)/np.sum(w)
+    epTm = 1/np.sqrt(np.sum(w))
+    y = len(pTs)/tr_tot[pint]
+    
+    gr.SetPoint(pint, pTm, y)
+    gr.SetPointError(pint, epTm, 0)
 
-h_calc = TH1D(f"h_calc", f"Impulsi calcolati; pT; Conteggi", nb, pTm-1, pTM+1)
-for pT in pTs: h_calc.Fill(pT)
-"""
-#fit = TF1(f"fit", "[0]*TMath::Log(x)/TMath::Log([1]) + [2]", pTm, pTM)
-fit = TF1(f"fit", "[0]+[1]*atan([2]*x)", 0, pTM)
-fit.SetParameters(0, 1, 10)
-h_calc.Fit(fit, "R")
-"""
+fit = TF1("fit", "[0] * 0.5 * (1 + TMath::Erf((x - [1]) / (TMath::Sqrt(2) * [2])))", 0, 10)
+fit.SetParameters(0.95, 0.8, 0.2) #ampiezza max, punto di flesso, larghezza
+gr.Fit(fit, "R")
+
 if graphics:
-    h_calc.SetFillColor(38) # Arancione
-    h_calc.SetLineColor(4) # Rosso
-    h_calc.SetLineWidth(2)
-    h_calc.Draw("HIST")
-    #fit.Draw("SAME")
+    gr.SetTitle("Grafico efficienza in funzione dell'impulso; Impulsi pT; Efficenza")
+    gr.SetMarkerSize(5)
+    gr.SetLineWidth(5)
+    gr.Draw("AP")
+    fit.Draw("SAME")
 
 if graphics: 
     c4.Modified()

@@ -6,7 +6,7 @@ import math as m
 #Geometria e parametri
 
 Xlayer = [0.1, 0.2, 0.4, 0.6, 0.8]
-pts = [0.5, 1, 1.5, 2, 5, 10] #inizio da 1 se no hit non hittano
+pts = [0.5, 1, 1.5, 2, 3, 5, 7, 10] #inizio da 0.5 se no hit non hittano
 
 mPi = 0.1396  # Massa del pione carico (GeV)
 B = 1.0
