@@ -93,6 +93,7 @@ for j in range(0, ntracce):
     phi   = (rnd.Rndm()*2-1)*0.1
     theta = 0.5
     pt = rnd.Rndm()*(max(pts)-min(pts)) + min(pts)
+    #pt = 10
 
     vec = ROOT.TVector3()
     vec.SetMagThetaPhi(pt/m.sin(theta), theta, phi)

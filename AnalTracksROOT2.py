@@ -97,12 +97,23 @@ for line in f:
 evstest.append(evento_test)
 f.close()
 
+c0 = TCanvas("c0", "Distribuzione Angolare", 800, 600)
+his = TH1D("his", "Distribuzione Angolare; Theta; Conteggi", 100, min(evstest[0].angle), max(evstest[0].angle))
+for ang in evstest[0].angle: his.Fill(ang)
+
+his.SetFillColor(38) # Azzurro
+his.SetLineColor(4) # Blu
+his.SetLineWidth(2)
+his.Draw("HIST")
+c0.Modified()
+c0.Update()
+    
 sigmas_f = []
 for evtest in evstest:
     ass = np.array([a for a in evtest.angle])
     sigmas_f.append(np.std(ass))
 
-#for s in sigmas_f: print(s)
+for s in sigmas_f: print(s)
 #################################################
 #              ANALISI EFFETTIVA                #
 #################################################
@@ -289,7 +300,7 @@ for eint, e in enumerate(listaTracceEventi):
     eRss.append(eRs)
     pTss.append(pTs)
     epTss.append(epTs)
-    if graphics: 
+    if allgraph: 
         c3.Modified()
         c3.Update()
         lista_canvas.append(c3)
