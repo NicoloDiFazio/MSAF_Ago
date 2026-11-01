@@ -349,6 +349,11 @@ for pint, pTs in enumerate(pTss):
         c += 1
     ptr = pts_reali[pint]
 
+ey = np.std(y)/np.sqrt(len(y))
+eptu = np.std(ptu)/np.sqrt(len(ptu))
+gr.SetPoint(c, np.mean(ptu), np.mean(y))
+gr.SetPointError(c, eptu, ey)
+
 fit = TF1("fit", "[0] * 0.5 * (1 + TMath::Erf((x - [1]) / (TMath::Sqrt(2) * [2])))", 0, 10)
 fit.SetParameters(0.99, 0.8, 0.5) #ampiezza max, punto di flesso, larghezza
 gr.Fit(fit, "R")
