@@ -6,7 +6,12 @@ import math as m
 #Geometria e parametri
 
 Xlayer = [0.1, 0.2, 0.4, 0.6, 0.8]
-pts = [0.5, 1, 1.5, 2, 3, 5, 7, 10] #inizio da 0.5 se no hit non hittano
+pts_reali = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+             1, 1, 1, 1, 1, 1, 1, 1,
+             1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
+             2, 2, 2, 2, 2, 2, 2, 2,
+             5, 5, 5, 5, 5, 5, 5, 5,
+             10, 10, 10, 10, 10, 10, 10, 10] #inizio da 0.5 se no hit non hittano
 
 mPi = 0.1396  # Massa del pione carico (GeV)
 B = 1.0
@@ -92,7 +97,7 @@ for j in range(0, ntracce):
     
     phi   = (rnd.Rndm()*2-1)*0.1
     theta = 0.5
-    pt = rnd.Rndm()*(max(pts)-min(pts)) + min(pts)
+    pt = rnd.Rndm()*(max(pts_reali)-min(pts_reali)) + min(pts_reali)
     #pt = 10
 
     vec = ROOT.TVector3()
@@ -110,7 +115,7 @@ ft.close()
 
 f = open('dati2.txt', 'w')
 #MC per eventi
-for jevt, pt in enumerate(pts): #n eventi
+for jevt, pt in enumerate(pts_reali): #n eventi
     f.write(str(jevt) + '\n')
     #ntrack  = int(rnd.Gaus(100,20))
     ntrack = 100

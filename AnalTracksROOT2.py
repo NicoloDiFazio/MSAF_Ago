@@ -66,7 +66,12 @@ Xsizes = [300 * um] * 5
 Ysizes = [50 * um, 50 * um, 200 * um, 200 * um, 200 * um]
 Zsizes = [100 * um] * 5
 
-pts_reali = [0.5, 1, 1.5, 2, 3, 5, 7, 10]
+pts_reali = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
+             1, 1, 1, 1, 1, 1, 1, 1,
+             1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
+             2, 2, 2, 2, 2, 2, 2, 2,
+             5, 5, 5, 5, 5, 5, 5, 5,
+             10, 10, 10, 10, 10, 10, 10, 10] #inizio da 0.5 se no hit non hittano
 
 #errori sulle x, y e z
 def sig(coord):
@@ -325,15 +330,24 @@ if graphics:
     c4 = TCanvas(f"c4", "Confronto impulsi reali/calcolati", 800, 600)
 
 gr = TGraphErrors()
+ptr = pts_reali[0]
+ptu = np.array([])
+y = np.array([])
+c = 0
+
 for pint, pTs in enumerate(pTss):
-    epTs = epTss[pint]
-    pTm = np.mean(pTs)
-    epTm = np.std(pTs)/np.sqrt(len(pTs))
-    y = len(pTs)/tr_tot[pint]
-    ey = np.sqrt(y*(1-y)/tr_tot[pint])
-    
-    gr.SetPoint(pint, pTm, y)
-    gr.SetPointError(pint, epTm, ey)
+    if pts_reali[pint] == ptr:
+        y = np.append(y, len(pTs)/tr_tot[pint])
+        ptu = np.append(ptu, np.mean(pTs))
+    elif pts_reali[pint] != ptr:
+        ey = np.std(y)/np.sqrt(len(y))
+        eptu = np.std(ptu)/np.sqrt(len(ptu))
+        gr.SetPoint(c, np.mean(ptu), np.mean(y))
+        gr.SetPointError(c, eptu, ey)
+        y = np.array([len(pTs)/tr_tot[pint]])
+        ptu = np.array([np.mean(pTs)])
+        c += 1
+    ptr = pts_reali[pint]
 
 fit = TF1("fit", "[0] * 0.5 * (1 + TMath::Erf((x - [1]) / (TMath::Sqrt(2) * [2])))", 0, 10)
 fit.SetParameters(0.99, 0.8, 0.5) #ampiezza max, punto di flesso, larghezza
@@ -342,7 +356,7 @@ gr.Fit(fit, "R")
 if graphics:
     gr.SetTitle("Grafico efficienza in funzione dell'impulso; Impulsi pT; Efficienza")
     gr.SetMarkerSize(5)
-    gr.SetLineWidth(5)
+    gr.SetLineWidth(2)
     gr.Draw("AP")
     fit.Draw("SAME")
 
