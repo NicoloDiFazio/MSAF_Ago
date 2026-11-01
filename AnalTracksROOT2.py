@@ -96,24 +96,24 @@ for line in f:
         evento_test.append(h)
 evstest.append(evento_test)
 f.close()
+if graphics:
+    c0 = TCanvas("c0", "Distribuzione Angolare", 800, 600)
+    his = TH1D("his", "Distribuzione Angolare; Theta; Conteggi", 100, min(evstest[0].angle), max(evstest[0].angle))
+    for ang in evstest[0].angle: his.Fill(ang)
 
-c0 = TCanvas("c0", "Distribuzione Angolare", 800, 600)
-his = TH1D("his", "Distribuzione Angolare; Theta; Conteggi", 100, min(evstest[0].angle), max(evstest[0].angle))
-for ang in evstest[0].angle: his.Fill(ang)
-
-his.SetFillColor(38) # Azzurro
-his.SetLineColor(4) # Blu
-his.SetLineWidth(2)
-his.Draw("HIST")
-c0.Modified()
-c0.Update()
+    his.SetFillColor(38) # Azzurro
+    his.SetLineColor(4) # Blu
+    his.SetLineWidth(2)
+    his.Draw("HIST")
+    c0.Modified()
+    c0.Update()
     
 sigmas_f = []
 for evtest in evstest:
     ass = np.array([a for a in evtest.angle])
     sigmas_f.append(np.std(ass))
 
-for s in sigmas_f: print(s)
+if verbose: for s in sigmas_f: print(s)
 #################################################
 #              ANALISI EFFETTIVA                #
 #################################################
@@ -292,7 +292,7 @@ for eint, e in enumerate(listaTracceEventi):
         if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
     if True:
-        print(f"Impulso {pts_reali[i]}")
+        print(f"Impulso {pts_reali[eint]}")
         print(f"tracce trovate {len(Rs)}/{tr_tot[eint]}={(len(Rs)/tr_tot[eint]):.2f}")
 
     somma += len(e)
