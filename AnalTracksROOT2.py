@@ -284,12 +284,15 @@ for eint, e in enumerate(listaTracceEventi):
         pT = 0.3*Rf*B
         epT = pT*eRf/Rf
         
-        if p_value >= 0.05 and len(np.unique(indici_di_traccia)) == 1:
+        if len(np.unique(indici_di_traccia)) == 1:
+            gok = g
             Rs.append(Rf)
             eRs.append(eRf)
             pTs = np.append(pTs, pT)
             epTs = np.append(epTs, epT)
-        
+        else:
+            gnook = g
+            
         if verbose:
             print(f"Chi2 / NDF = {chi2:.2f} / {ndf} (p-value: {p_value:.4f})")
     if True:
@@ -305,6 +308,15 @@ for eint, e in enumerate(listaTracceEventi):
         c3.Modified()
         c3.Update()
         lista_canvas.append(c3)
+
+c6 = TCanvas(f"c6", "Fit circolare sulle tracce", 800, 600)
+c6.Divide(2, 1)
+c6.cd(1)
+gnook.Draw("AP")
+c6.cd(2)
+gok.Draw("AP") 
+c6.Modified()
+c6.Update()
 
 graphics=True
 
