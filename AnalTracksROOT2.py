@@ -330,7 +330,7 @@ for pint, pTs in enumerate(pTss):
     pTm = np.mean(pTs)
     epTm = np.std(pTs)/np.sqrt(len(pTs))
     y = len(pTs)/tr_tot[pint]
-    ey = np.sqrt(y*(1-y)/len(tr_tot))
+    ey = np.sqrt(y*(1-y)/tr_tot[pint])
     
     gr.SetPoint(pint, pTm, y)
     gr.SetPointError(pint, epTm, ey)
