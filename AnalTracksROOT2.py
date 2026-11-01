@@ -113,7 +113,8 @@ for evtest in evstest:
     ass = np.array([a for a in evtest.angle])
     sigmas_f.append(np.std(ass))
 
-if verbose: for s in sigmas_f: print(s)
+if verbose:
+    for s in sigmas_f: print(s)
 #################################################
 #              ANALISI EFFETTIVA                #
 #################################################
