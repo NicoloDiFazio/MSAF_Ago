@@ -223,7 +223,7 @@ for i, hist in enumerate(lista_histo):
             print(f"angolo numero {som}")
             tr.angle_print()
     if True:
-        print(f"evento numero {i}")
+        print(f"Impulso {pts_reali[i]}")
         print(f"tracce ricostruite {tr_tro[i]}/{tr_tot[i]}={(tr_tro[i]/tr_tot[i]):.2f}")
 
 #################################################
