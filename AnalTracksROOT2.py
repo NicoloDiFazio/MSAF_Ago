@@ -275,7 +275,7 @@ for eint, e in enumerate(listaTracceEventi):
         xci  = 0.0
         
         f_circ.SetParameters(yci, ri, xci)
-        g.Fit(f_circ, "RQS")
+        res = g.Fit(f_circ, "RQS")
         if allgraph: g.Draw("AP")
         ycf,  Rf,  xcf  = (f_circ.GetParameter(i) for i in range(3))
         eycf, eRf, exff = (f_circ.GetParError(i)  for i in range(3))
@@ -283,8 +283,9 @@ for eint, e in enumerate(listaTracceEventi):
 
         pT = 0.3*Rf*B
         epT = pT*eRf/Rf
+        conv = res.IsValid()
         
-        if len(np.unique(indici_di_traccia)) == 5:
+        if len(np.unique(indici_di_traccia)) == t.len() and conv:
             gok = g
             Rs.append(Rf)
             eRs.append(eRf)
@@ -329,12 +330,13 @@ for pint, pTs in enumerate(pTss):
     pTm = np.mean(pTs)
     epTm = np.std(pTs)/np.sqrt(len(pTs))
     y = len(pTs)/tr_tot[pint]
+    ey = np.sqrt(y*(1-y)/len(pTs))
     
     gr.SetPoint(pint, pTm, y)
-    gr.SetPointError(pint, epTm, 0.00001)
+    gr.SetPointError(pint, epTm, ey)
 
 fit = TF1("fit", "[0] * 0.5 * (1 + TMath::Erf((x - [1]) / (TMath::Sqrt(2) * [2])))", 0, 10)
-fit.SetParameters(0.95, 0.8, 0.2) #ampiezza max, punto di flesso, larghezza
+fit.SetParameters(0.99, 0.8, 0.5) #ampiezza max, punto di flesso, larghezza
 gr.Fit(fit, "R")
 
 if graphics:
