@@ -258,7 +258,7 @@ for eint, e in enumerate(listaTracceEventi):
         c3.Divide(col, row)
     for tint, t in enumerate(e):
         if allgraph: c3.cd(tint+1)
-        indici_di_traccia = np.array([dato.trkind for dato in t.data])
+        indici_di_traccia = np.array([dato.layind for dato in t.data])
         x = np.array([dato.x for dato in t.data])
         ex = np.array([sig(Xsizes[dato.layind]) for dato in t.data])
         y = np.array([dato.y for dato in t.data])
@@ -284,7 +284,7 @@ for eint, e in enumerate(listaTracceEventi):
         pT = 0.3*Rf*B
         epT = pT*eRf/Rf
         
-        if len(np.unique(indici_di_traccia)) == 1:
+        if len(np.unique(indici_di_traccia)) == 5:
             gok = g
             Rs.append(Rf)
             eRs.append(eRf)
