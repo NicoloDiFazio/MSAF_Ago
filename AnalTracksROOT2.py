@@ -242,7 +242,7 @@ eRss = []
 pTss = []
 epTss = []
 somma = 0
-count = 0
+counts = []
 Ris = []
 for pt_re in pts_reali:
     Ris.append(10/3*pt_re/B)
@@ -251,6 +251,7 @@ risposta = input("vuoi visualizzare i fit specifici? (y/n o t/f) ").strip().lowe
 allgraph = risposta in ["y", "t"]
 
 for eint, e in enumerate(listaTracceEventi):
+    count = 0
     Rs = []
     eRs = []
     pTs = np.array([])
@@ -263,7 +264,8 @@ for eint, e in enumerate(listaTracceEventi):
         c3.Divide(col, row)
     for tint, t in enumerate(e):
         if allgraph: c3.cd(tint+1)
-        indici_di_traccia = np.array([dato.layind for dato in t.data])
+        indici_di_traccia = np.array([dato.trkind for dato in t.data])
+        indici_di_layer = np.array([dato.layind for dato in t.data])
         x = np.array([dato.x for dato in t.data])
         ex = np.array([sig(Xsizes[dato.layind]) for dato in t.data])
         y = np.array([dato.y for dato in t.data])
@@ -290,7 +292,8 @@ for eint, e in enumerate(listaTracceEventi):
         epT = pT*eRf/Rf
         conv = res.IsValid()
         
-        if len(np.unique(indici_di_traccia)) == t.len() and conv:
+        if len(np.unique(indici_di_layer)) == t.len() and conv:
+            if len(np.unique(indici_di_traccia)) == 1: count += 1
             gok = g
             Rs.append(Rf)
             eRs.append(eRf)
@@ -304,12 +307,14 @@ for eint, e in enumerate(listaTracceEventi):
     if True:
         print(f"Impulso {pts_reali[eint]}")
         print(f"tracce trovate {len(Rs)}/{tr_tot[eint]}={(len(Rs)/tr_tot[eint]):.2f}")
+        print(f"tracce pure {count}/{len(Rs)}={count/len(Rs):.2f}")
 
     somma += len(e)
     Rss.append(Rs)
     eRss.append(eRs)
     pTss.append(pTs)
     epTss.append(epTs)
+    counts.append(count)
     if allgraph: 
         c3.Modified()
         c3.Update()
@@ -362,8 +367,35 @@ if graphics:
     gr.SetTitle("Grafico efficienza in funzione dell'impulso; Impulsi pT; Efficienza")
     gr.SetMarkerSize(5)
     gr.SetLineWidth(2)
-    gr.Draw("AP")
+    gr.Draw("APE")
     fit.Draw("SAME")
+
+grr = TGraphErrors()
+ptr = pts_reali[0]
+y = np.array([])
+c = 0
+
+for pint, pTs in enumerate(pTss):
+    if pts_reali[pint] == ptr:
+        y = np.append(y, counts[pint]/tr_tot[pint])
+    elif pts_reali[pint] != ptr:
+        ey = np.std(y)/np.sqrt(len(y))
+        grr.SetPoint(c, ptr, np.mean(y))
+        grr.SetPointError(c, 0, ey)
+        y = np.array([counts[pint]/tr_tot[pint]])
+        c += 1
+    ptr = pts_reali[pint]
+
+ey = np.std(y)/np.sqrt(len(y))
+grr.SetPoint(c, ptr, np.mean(y))
+grr.SetPointError(c, 0, ey)
+
+if graphics:
+    grr.SetTitle("Grafico efficienza reale in funzione dell'impulso; Impulsi pT; Efficienza")
+    grr.SetMarkerStyle(29)
+    grr.SetMarkerColor(8)
+    grr.SetMarkerSize(1.2)
+    grr.Draw("PSAME")
 
 if graphics: 
     c4.Modified()
